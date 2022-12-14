@@ -35,8 +35,12 @@
 1. VSCode를 실행하고 GitHub repository를 clone 한다.
    ![스크린샷 2022-12-14 오후 8 02 53](https://user-images.githubusercontent.com/97441976/207578304-275e9d38-1b8f-4859-a15a-229c6b5e2b23.png)
 
-2. ![스크린샷 2022-12-14 오후 8 03 43](https://user-images.githubusercontent.com/97441976/207578636-c618f715-2db9-42d7-b2bd-2aa599c506d9.png)
-   해당 창에 레포지토리의 주소를 입력한다.<br>
+2. 아래 그림과 같은 창에 레포지토리의 주소를 입력한다.
+
+   <br>
+
+   ![스크린샷 2022-12-14 오후 8 03 43](https://user-images.githubusercontent.com/97441976/207578636-c618f715-2db9-42d7-b2bd-2aa599c506d9.png)
+   <br>
    (본 프로젝트의 경우 https://github.com/zzanggyusik/corner_stone.git)
 
 3. Sublinemerge를 이용하여 레포지토리 열기.
