@@ -36,9 +36,7 @@
    ![스크린샷 2022-12-14 오후 8 02 53](https://user-images.githubusercontent.com/97441976/207578304-275e9d38-1b8f-4859-a15a-229c6b5e2b23.png)
 
 2. 아래 그림과 같은 창에 레포지토리의 주소를 입력한다.
-
    <br>
-
    ![스크린샷 2022-12-14 오후 8 03 43](https://user-images.githubusercontent.com/97441976/207578636-c618f715-2db9-42d7-b2bd-2aa599c506d9.png)
    <br>
    (본 프로젝트의 경우 https://github.com/zzanggyusik/corner_stone.git)
@@ -62,7 +60,6 @@
    Sublimemerge를 이용하여 현재 위치 확인
 
    <br>![스크린샷 2022-12-14 오후 8 18 20](https://user-images.githubusercontent.com/97441976/207581727-c0fdfb88-aa26-4f14-99ed-986ccf608db1.png)
-
    <br>
    이처럼 feature/ 로 시작하는 곳에 불이 들어와있어야 함
 
@@ -79,7 +76,6 @@
      <br>이떄 아래 그림
 
      <br>![스크린샷 2022-12-14 오후 8 22 39](https://user-images.githubusercontent.com/97441976/207582588-b1d701dc-798f-49ac-a9bd-2a481597d091.png)
-
      <br>과 같은 메세지가 뜨는데 중간의 git push --set 으로 시작하는 라인을 복사해서 다시 입력
 
 7. 브랜치 통합
