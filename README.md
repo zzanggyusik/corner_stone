@@ -58,7 +58,6 @@
    - git flow feature start {본인 이름 또는 팀}
 
    Sublimemerge를 이용하여 현재 위치 확인
-
    <br>![스크린샷 2022-12-14 오후 8 18 20](https://user-images.githubusercontent.com/97441976/207581727-c0fdfb88-aa26-4f14-99ed-986ccf608db1.png)
    <br>
    이처럼 feature/ 로 시작하는 곳에 불이 들어와있어야 함
@@ -74,7 +73,6 @@
    - git push
 
      <br>이떄 아래 그림
-
      <br>![스크린샷 2022-12-14 오후 8 22 39](https://user-images.githubusercontent.com/97441976/207582588-b1d701dc-798f-49ac-a9bd-2a481597d091.png)
      <br>과 같은 메세지가 뜨는데 중간의 git push --set 으로 시작하는 라인을 복사해서 다시 입력
 
