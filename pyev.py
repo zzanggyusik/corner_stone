@@ -59,46 +59,76 @@ class PEx(BehaviorModelExecutor):
                     if(message[0] == ' '): message = message[1:]
                     call = ""
                     site = ""
-                    if(message.find('bit') != -1):
+                    #번역을 위한 전 처리 과정
+                    if(message.find('bit') != -1):  #사이트 추출
                         bit = message.find('bit.ly')
                         site = message[bit:message[bit:].find(' ')+bit]
                         message = message[:bit] + message[message[bit:].find(' ')+bit:]
                     if(message.find('ncvr') != -1):
                         ncvr = message.find('ncvr')
-                        site = message[ncvr:ncvr + 15]
-                        if(message[ncvr-1] == '('):
-                            message = message[:ncvr-1] + ' ' +message[ncvr + 16:]
+                        if(message[ncvr-1] == '('): #사이트가 괄호 안에 있다면 괄호를 포함하여 추출
+                            site = message[ncvr-1:ncvr+16]
+                            message = message[:ncvr-1] + message[ncvr+16:]
                         else:
-                            message = message[:ncvr] + ' ' +message[ncvr + 15:]
-                    if(message.find('☎') != -1):
-                        call = message[message.find('☎'):]
-                        message = message[:message.find('☎')]
+                            site = message[ncvr:ncvr+15]
+                            message = message[:ncvr] + message[ncvr+15:]
+                    if(message.find('http') != -1):
+                        http = message.find('http')
+                        site = message[http:]
+                        message = message[:http]
+                    if(message.find('☎') != -1):   #전화 번호 추출
+                        ca = message.find('☎')
+                        if(message[ca-1] == '('):   #전화 번호가 괄호 안에 있다면 괄호를 포함하여 추출
+                            call = message[ca-1:]
+                            message = message[:ca-1]
+                        else:
+                            call = message[ca:]
+                            message = message[:ca]
+                    if(message.find('☏') != -1):
+                        ca = message.find('☏')
+                        if(message[ca-1] == '('):
+                            call = message[ca-1:]
+                            message = message[:ca-1]
+                        else:
+                            call = message[ca:]
+                            message = message[:ca]
+
                     messages = [message, "", "", ""]
                     langs = ['ko', 'en', 'zh-cn', 'ja']
-                    for i in message.split('▲'):
-                        if(i.find(')') - i.find('(') > 4):
-                            s = i.find('(')
+                    covid = -10
+                    # while(message[covid+10:].find('코로나') != -1):
+                    #     covid = message.find('코로나')
+                    #     if(covid != -1):
+                    #         message = message[:covid] + '코로나 바이러스 ' + message[covid+3:]
+                    message = message.replace('▲', '\n').replace('▶', '\n').replace('△', '\n')
+                    message = '\n'.join(message.split('\n\n'))
+                    for i in message.split('\n'):
+                        if(i.find(')') - i.find('(') > 4):  #괄호 안에 문자열이 있을 경우
+                            s = i.find('(') #괄호 안 문자열을 따로 번역하기 위한 전처리 과정
                             e = i.find(')')
                             for l in range(1, len(langs)):
-                                if(s > 0):
-                                    messages[l] += self.translator.translate(i[:s], dest = langs[l], src = 'ko').text + '('
-                                else: messages[l] += '('
-                                messages[l] += self.translator.translate(i[s+1:e], dest = langs[l], src = 'ko').text + ')'
-                                if(len(i) > e+1 and i[e+1:] != ' '):
-                                    messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '
-                                else: messages[l] += '. '
-                        else:
+                                if(s > 0):  #괄호가 맨 앞에 있지 않을 경우
+                                    messages[l] += self.translator.translate(i[:s], dest = langs[l], src = 'ko').text + '(' #괄호 앞에 있는 문자열을 번역 및 저장
+                                else: messages[l] += '(' #괄호가 맨 앞에 있을 경우
+
+                                messages[l] += self.translator.translate(i[s+1:e], dest = langs[l], src = 'ko').text + ')'  #괄호 안에 있는 문자열을 번역 및 저장
+
+                                if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
+                                    messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
+                                else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
+                        else:   #괄호 안에 문자열이 없을 경우
                             for l in range(1, len(langs)):
                                 messages[l] += self.translator.translate(i, dest = langs[l], src = 'ko').text + '. '
+
                     #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
                     if(site != ""):
-                        for l in range(0, len(langs)):
+                        for l in range(0, len(langs)):  #추출했던 사이트 이어 붙이기
                             messages[l] += site
                     if(call != ""):
-                        for l in range(0, len(langs)):
+                        for l in range(0, len(langs)):  #추출했던 전화 번호 이어 붙이기
                             messages[l] += call
                     for i in range(len(messages)):
-                        self.insert_table(self.con, i, messages[i])
+                        self.insert_table(self.con, i, messages[i]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
                     index += 1
                 else: 
