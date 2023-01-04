@@ -1,37 +1,28 @@
-#python-telegram-bot==13
+#python-telegram-bot==13.15
 #python==3.8.9
 
 #동작 실행 
 ###check
 
+from config import *
 import telegram
 from telegram import *
 from telegram.ext import *
 
-TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
-#ID = '5508231825' #id 불러오기 필요
-
 updater = Updater(token = TOKEN, use_context = True)
 
-# def first_button(update, context):
-#     task_button = [
-#         InlineKeyboardButton('유성구 덕명동', callack_data=1)
-#         , InlineKeyboardButton('유성구 관평동', callbak_data=2)
-#     ]
 
-#     reply_markup = InlineKeyboardMarkup(task_button)
+handler = ConversationHandler(
+    entry_points = [CommandHandler('start',location_select)],
+    state = {
 
-#     context.bot.send_message(
-#         chat_id=update.message.chat_id
-#         , text='작업을 선택해주세요.'
-#         , reply_markup=reply_markup
-#     )
-# task_buttons_handler = CommandHandler('cornerstone', first_button)
 
-# dispatcher.add_handler(task_buttons_handler)
 
-# updater.start_polling()
-# updater.idle()
+    },
+    fallbacks = [CommandHandler('cancel',cancel)]
+)
+
+
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
@@ -41,15 +32,30 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
         menu.append(footer_buttons)
     return menu
 
-def get_command(update, context):
-    print("get")
+def cor_location(update, context:CallbackContext):
+
     show_list = []
-    show_list.append(InlineKeyboardButton("유성구 덕명동", callback_data="on")) # add on button
-    show_list.append(InlineKeyboardButton("유성구 관평동", callback_data="off")) # add off button
-    show_list.append(InlineKeyboardButton("cancel", callback_data="cancel")) # add cancel button
+    show_list.append(InlineKeyboardButton("충북", callback_data="1")) # add on button
+    show_list.append(InlineKeyboardButton("대전", callback_data="2")) # add off button
+    show_list.append(InlineKeyboardButton("cancel", callback_data="0")) # add cancel button
     show_markup = InlineKeyboardMarkup(build_menu(show_list, len(show_list) - 1)) # make markup
 
-    update.message.reply_text("원하는 값을 선택하세요", reply_markup=show_markup)
+    show_markup = InlineDeyboardMarkup(build_menu(btn_list, 3))
+
+    update.message.reply_text("선택 되었습니다",reply_markup = show_markup)
+
+    return LOCATION
+
+def cor_mid(update, context:CallbackContext):
+
+    if query == "1":
+        return cor_language(update, context)
+    elif query == "2":
+        return cor_language(update, context)
+
+def cor_language(update, context:CallbackContext):
+
+    
 
 get_handler = CommandHandler('get', get_command)
 updater.dispatcher.add_handler(get_handler)
