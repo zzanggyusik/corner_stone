@@ -2,6 +2,7 @@
 #python==3.8.9
 
 #동작 실행 확인
+###check
 
 import telegram
 from telegram import *
