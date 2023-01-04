@@ -12,6 +12,18 @@ from telegram.ext import *
 updater = Updater(token = TOKEN, use_context = True)
 
 
+handler = ConversationHandler(
+    entry_points = [CommandHandler('start',location_select)],
+    state = {
+
+
+
+    },
+    fallbacks = [CommandHandler('cancel',cancel)]
+)
+
+
+
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
     if header_buttons:
@@ -20,15 +32,30 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
         menu.append(footer_buttons)
     return menu
 
-def get_command(update, context):
-    print("get")
+def cor_location(update, context:CallbackContext):
+
     show_list = []
-    show_list.append(InlineKeyboardButton("충북", callback_data="on")) # add on button
-    show_list.append(InlineKeyboardButton("대전", callback_data="off")) # add off button
-    show_list.append(InlineKeyboardButton("cancel", callback_data="cancel")) # add cancel button
+    show_list.append(InlineKeyboardButton("충북", callback_data="1")) # add on button
+    show_list.append(InlineKeyboardButton("대전", callback_data="2")) # add off button
+    show_list.append(InlineKeyboardButton("cancel", callback_data="0")) # add cancel button
     show_markup = InlineKeyboardMarkup(build_menu(show_list, len(show_list) - 1)) # make markup
 
-    update.message.reply_text("원하는 값을 선택하세요", reply_markup=show_markup)
+    show_markup = InlineDeyboardMarkup(build_menu(btn_list, 3))
+
+    update.message.reply_text("선택 되었습니다",reply_markup = show_markup)
+
+    return LOCATION
+
+def cor_mid(update, context:CallbackContext):
+
+    if query == "1":
+        return cor_language(update, context)
+    elif query == "2":
+        return cor_language(update, context)
+
+def cor_language(update, context:CallbackContext):
+
+    
 
 get_handler = CommandHandler('get', get_command)
 updater.dispatcher.add_handler(get_handler)
