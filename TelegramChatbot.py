@@ -3,33 +3,105 @@
 
 import telegram
 from telegram import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler
 from telegram.ext import *
+#from config import *
 
-token = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
-bot = telegram.Bot(token=token)
-updates = bot.getUpdates()
-#print(updates[0]['message']['chat']['id'])
+class Cornerstone:
+    def __init__(self) -> None:
+        self.user_id = ''
+        self.location = ''
+        self.language = ''
+        self.ENTRY_POINT = 1
+        self.LOCATION_BUTTON = 2
+        self.LANGUAGE_BUTTON = 3
+        self.SAVE_DATA = 4
+        self.CANCEL = 5
+        self.mainHandler = ConversationHandler(
+                entry_points = [CommandHandler('start', self.locationButtonHandler)],
+                states = {
+                    self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageButtonHandler)],
+                    self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.sendMessageHandler)]
+                },
+                fallbacks = [CommandHandler('cancel',self.fallbackHandler)],
+                map_to_parent={
+                    ConversationHandler.END:ConversationHandler.END
+                }
+            )
 
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
+    def introduction(self, update:Update):
+            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.')
+            return self.ENTRY_POINT
 
-    return menu
+    # DB 데이터 관리
+    def dbHandler(self):
+        # User ID : self.user_id
+        # Location : self.location
+        # Language : self.language
+        return True
 
-def btnTest(update:Update, context:CallbackContext) -> None:
-    btn_list = []
-    btn_list.append(InlineKeyboardButton("버튼 1", callback_data="1"))
-    btn_list.append(InlineKeyboardButton("버튼 2", callback_data="2"))
-    btn_list.append(InlineKeyboardButton("버튼 3", callback_data="3"))
+    def build_menu(self, buttons, n_cols, header_buttons=None, footer_buttons=None):
+        menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+        if header_buttons:
+            menu.insert(0, header_buttons)
+        if footer_buttons:
+            menu.append(footer_buttons)
+        return menu
 
-    show_markup = InlineKeyboardMarkup(build_menu(btn_list, len(btn_list)))
-    update.message.reply_text("선택", reply_markup = show_markup)
+    def locationButtonHandler(self, update:Update, context:CallbackContext) -> None:
+        self.introduction(update=update)
+        self.user_id = update.effective_chat.id
+        btn_list = []
+        btn_list.append(InlineKeyboardButton("대전광역시", callback_data="대전광역시"))
+        btn_list.append(InlineKeyboardButton("충북", callback_data="충북"))
 
-updater = Updater(token)
+        show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
+        context.bot.send_message(chat_id=self.user_id, 
+            text='거주하시는 지역을 선택해 주세요.', 
+            reply_markup=show_markup
+        )
+        return self.LOCATION_BUTTON
 
-updater.dispatcher.add_handler(CommandHandler('hi', btnTest))
+    def languageButtonHandler(self, update:Update, context:CallbackContext) -> None:
+        self.location = update.callback_query.data
+        print(self.location)
+
+        btn_list = []
+        btn_list.append(InlineKeyboardButton("영어", callback_data="영어"))
+        btn_list.append(InlineKeyboardButton("일본어", callback_data="일본어"))
+        btn_list.append(InlineKeyboardButton("중국어", callback_data="중국어"))
+
+        show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
+        context.bot.send_message(chat_id=self.user_id, 
+            text='사용하실 언어를 선택해 주세요.', 
+            reply_markup=show_markup
+            )
+
+        return self.LANGUAGE_BUTTON
+
+    def sendMessageHandler(self, update:Update, context:CallbackContext) -> None:
+        self.language = update.callback_query.data
+        print(self.language)
+        self.dbHandler()
+
+        message = '긴급 재난 문자'
+
+        # 긴급 재난 문자 전송
+        context.bot.send_message(chat_id=self.user_id,
+            text=message
+        )
+        return self.SAVE_DATA
+    
+    def fallbackHandler(self, update:Update, context:CallbackContext):
+        update.message.reply_text('이용해 주셔서 감사합니다.')
+        return self.CANCEL
+
+bot = Cornerstone()
+updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
+updater.dispatcher.add_handler(bot.mainHandler)
 updater.start_polling()
+updater.idle()
+
+
+
+
