@@ -5,20 +5,17 @@ import telegram
 from telegram import *
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import *
-#from config import *
+import prettytable as pt
 
-class Cornerstone:
+class CornerstoneChatbot:
     def __init__(self) -> None:
         #============== User Data ==============#
         self.user_id = ''           # 사용자의 ID, self.locationButtonHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageButtonHandler에서 값이 저장 됨
         self.language = ''          # 선택한 언어, self.sendMessageHandler에서 값이 저장 됨
         #============ Return const =============#
-        self.ENTRY_POINT = 1
-        self.LOCATION_BUTTON = 2    
-        self.LANGUAGE_BUTTON = 3
-        self.SAVE_DATA = 4
-        self.CANCEL = 5
+        self.LOCATION_BUTTON = 1    
+        self.LANGUAGE_BUTTON = 2
         #================ Main =================#
         '''
         # ConversationHandler를 통해 Handler 흐름 제어
@@ -54,11 +51,23 @@ class Cornerstone:
     # 챗봇 소개 및 DB 연동
     # 챗봇 명령어 등을 설명하기 위함
     # self.locationButtonHandler callback 함수에서 호출 됨, callback 함수 이외에 제일 먼저 호출 되는 함수
-    # 반환 값은 사용되지 않음
     '''
     def introduction(self, update:Update):
             update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.')
-            return self.ENTRY_POINT
+        
+    def showHint(self, update:Update):
+            table = pt.PrettyTable(['function', 'enter'])
+            table.align['function'] = 'm'
+            table.align['input'] = 'm'
+
+            data = [
+                ('start','/start '),
+                ('option','/option'),
+            ]
+            for start, option in data:
+                table.add_row([start, option])
+
+            update.message.reply_text(f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
 
     '''
     # 일반 함수
@@ -97,6 +106,7 @@ class Cornerstone:
     '''
     def locationButtonHandler(self, update:Update, context:CallbackContext) -> None:
         self.introduction(update=update)
+        self.showHint(update=update)
         self.user_id = update.effective_chat.id
         btn_list = []
         btn_list.append(InlineKeyboardButton("대전광역시", callback_data="대전광역시"))
@@ -142,7 +152,6 @@ class Cornerstone:
     # 이 Handler 호출 시점에 self.user_id, self.location, self.language에 값이 들어 가게 됨
     # 따라서, 이 Handler가 호출 되는 시점에, DB에 데이터를 저장하도록 설계함(self.dbHandler 함수 호출)
     # message : DB에서 얻어 온 실제 재난 문자가 저장 되는 변수
-    # 반환 값은 사용되지 않음
     '''
     def sendMessageHandler(self, update:Update, context:CallbackContext) -> None:
         self.language = update.callback_query.data
@@ -155,7 +164,6 @@ class Cornerstone:
         context.bot.send_message(chat_id=self.user_id,
             text=message
         )
-        return self.SAVE_DATA
     
     '''
     # callback 함수
@@ -163,10 +171,9 @@ class Cornerstone:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
-        return self.CANCEL
 
 #============= Call ==============#
-bot = Cornerstone()
+bot = CornerstoneChatbot()
 updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
 updater.dispatcher.add_handler(bot.mainHandler)
 updater.start_polling()
