@@ -52,6 +52,8 @@ class PEx(BehaviorModelExecutor):
                     break
                 title = titles[index].find_element(By.TAG_NAME, 'a').click()
                 self.driver.implicitly_wait(20)
+                location = self.driver.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text
+                print(location)
                 message = self.driver.find_element(By.CSS_SELECTOR, '#msg_cn').text
                 self.driver.back()
                 #self.driver.implicitly_wait(20)
@@ -76,6 +78,7 @@ class PEx(BehaviorModelExecutor):
                         http = message.find('http')
                         site = message[http:]
                         message = message[:http]
+
                     if(message.find('☎') != -1):   #전화 번호 추출
                         ca = message.find('☎')
                         if(message[ca-1] == '('):   #전화 번호가 괄호 안에 있다면 괄호를 포함하여 추출
@@ -84,6 +87,7 @@ class PEx(BehaviorModelExecutor):
                         else:
                             call = message[ca:]
                             message = message[:ca]
+                        call = call.replace('☎', 'Phone number ')
                     if(message.find('☏') != -1):
                         ca = message.find('☏')
                         if(message[ca-1] == '('):
@@ -92,6 +96,7 @@ class PEx(BehaviorModelExecutor):
                         else:
                             call = message[ca:]
                             message = message[:ca]
+                        call = call.replace('☏', 'Phone number ')
 
                     messages = [message, "", "", ""]
                     langs = ['ko', 'en', 'zh-cn', 'ja']
