@@ -1,6 +1,7 @@
 # import config
+# TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 
-TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
+token = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
 
 #TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 #ID = '5508231825' #id 불러오기 필요
