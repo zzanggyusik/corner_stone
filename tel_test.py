@@ -2,7 +2,6 @@
 #python==3.8.9
 
 #동작 실행 확인
-####test
 
 import telegram
 from telegram import *
@@ -12,6 +11,9 @@ TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 #ID = '5508231825' #id 불러오기 필요
 
 updater = Updater(token = TOKEN, use_context = True)
+
+#대전
+#충북
 
 # def first_button(update, context):
 #     task_button = [
@@ -44,8 +46,8 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
 def get_command(update, context):
     print("get")
     show_list = []
-    show_list.append(InlineKeyboardButton("유성구 덕명동", callback_data="on")) # add on button
-    show_list.append(InlineKeyboardButton("유성구 관평동", callback_data="off")) # add off button
+    show_list.append(InlineKeyboardButton("대전", callback_data="on")) # add on button
+    show_list.append(InlineKeyboardButton("충북", callback_data="off")) # add off button
     show_list.append(InlineKeyboardButton("cancel", callback_data="cancel")) # add cancel button
     show_markup = InlineKeyboardMarkup(build_menu(show_list, len(show_list) - 1)) # make markup
 
