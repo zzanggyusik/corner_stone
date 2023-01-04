@@ -1,7 +1,8 @@
 #python-telegram-bot==13
 #python==3.8.9
 
-#동작 실행 확인
+#동작 실행 
+###check
 
 import telegram
 from telegram import *
