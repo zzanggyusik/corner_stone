@@ -6,7 +6,6 @@ from googletrans import Translator #pip install googletrans==4.0.0-rc1
 import sqlite3
 from sqlite3 import Error
 
-#Hi
 
 class PEx(BehaviorModelExecutor):
     def __init__(self, instance_time, destruct_time, name, engine_name):
@@ -57,14 +56,47 @@ class PEx(BehaviorModelExecutor):
                 self.driver.back()
                 #self.driver.implicitly_wait(20)
                 if(message != ''):
-                    #location, message = message[:message.find(']') + 1], message[message.find(']') + 1:]
                     if(message[0] == ' '): message = message[1:]
-                    #print(location)
-                    messages = []
-                    messages.append(message)
-                    messages.append(self.translator.translate(message, dest = 'en', src = 'ko').text)
-                    messages.append(self.translator.translate(message, dest = 'zh-cn', src = 'ko').text)
-                    messages.append(self.translator.translate(message, dest = 'ja', src = 'ko').text) #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
+                    call = ""
+                    site = ""
+                    if(message.find('bit') != -1):
+                        bit = message.find('bit.ly')
+                        site = message[bit:message[bit:].find(' ')+bit]
+                        message = message[:bit] + message[message[bit:].find(' ')+bit:]
+                    if(message.find('ncvr') != -1):
+                        ncvr = message.find('ncvr')
+                        site = message[ncvr:ncvr + 15]
+                        if(message[ncvr-1] == '('):
+                            message = message[:ncvr-1] + ' ' +message[ncvr + 16:]
+                        else:
+                            message = message[:ncvr] + ' ' +message[ncvr + 15:]
+                    if(message.find('☎') != -1):
+                        call = message[message.find('☎'):]
+                        message = message[:message.find('☎')]
+                    messages = [message, "", "", ""]
+                    langs = ['ko', 'en', 'zh-cn', 'ja']
+                    for i in message.split('▲'):
+                        if(i.find(')') - i.find('(') > 4):
+                            s = i.find('(')
+                            e = i.find(')')
+                            for l in range(1, len(langs)):
+                                if(s > 0):
+                                    messages[l] += self.translator.translate(i[:s], dest = langs[l], src = 'ko').text + '('
+                                else: messages[l] += '('
+                                messages[l] += self.translator.translate(i[s+1:e], dest = langs[l], src = 'ko').text + ')'
+                                if(len(i) > e+1 and i[e+1:] != ' '):
+                                    messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '
+                                else: messages[l] += '. '
+                        else:
+                            for l in range(1, len(langs)):
+                                messages[l] += self.translator.translate(i, dest = langs[l], src = 'ko').text + '. '
+                    #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
+                    if(site != ""):
+                        for l in range(0, len(langs)):
+                            messages[l] += site
+                    if(call != ""):
+                        for l in range(0, len(langs)):
+                            messages[l] += call
                     for i in range(len(messages)):
                         self.insert_table(self.con, i, messages[i])
                         print(messages[i])
