@@ -9,14 +9,17 @@ from telegram.ext import *
 
 class Cornerstone:
     def __init__(self) -> None:
-        self.user_id = ''
-        self.location = ''
-        self.language = ''
+        #============== User Data ==============#
+        self.user_id = ''           # 사용자의 ID, self.locationButtonHandler에서 값이 저장 됨
+        self.location = ''          # 선택한 지역, self.languageButtonHandler에서 값이 저장 됨
+        self.language = ''          # 선택한 언어, self.sendMessageHandler에서 값이 저장 됨
+        #============ Return const =============#
         self.ENTRY_POINT = 1
-        self.LOCATION_BUTTON = 2
+        self.LOCATION_BUTTON = 2    
         self.LANGUAGE_BUTTON = 3
         self.SAVE_DATA = 4
         self.CANCEL = 5
+        #=======================================#
         self.mainHandler = ConversationHandler(
                 entry_points = [CommandHandler('start', self.locationButtonHandler)],
                 states = {
@@ -34,7 +37,7 @@ class Cornerstone:
             return self.ENTRY_POINT
 
     # DB 데이터 관리
-    def dbHandler(self):
+    def dbHandler(self) -> None:
         # User ID : self.user_id
         # Location : self.location
         # Language : self.language
@@ -57,7 +60,7 @@ class Cornerstone:
 
         show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
         context.bot.send_message(chat_id=self.user_id, 
-            text='거주하시는 지역을 선택해 주세요.', 
+            text='거주하는 지역을 선택해 주세요.', 
             reply_markup=show_markup
         )
         return self.LOCATION_BUTTON
