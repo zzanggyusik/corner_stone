@@ -3,63 +3,73 @@
 
 import telegram
 from telegram import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler
 from telegram.ext import *
 
 token = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
 
-LOCATION_BUTTON, LANGUATE_BUTTON = range(2)
+class Cornerstone:
+    def __init__(self) -> None:
+        self.user_id = '0'
+        self.ENTRY_POINT, self.LOCATION_BUTTON, self.LANGUAGE_BUTTON = range(3)
+        self.mainHandler = ConversationHandler(
+                entry_points = [CommandHandler('start', self.location_btn)],
+                states = {
+                    self.LOCATION_BUTTON : [CallbackQueryHandler(self.language_btn)],
+                },
+                fallbacks = [CommandHandler('cancel',self.language_btn)],
 
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
+                map_to_parent={
+                    ConversationHandler.END:ConversationHandler.END
+                }
+            )
+    def sendMessages(self, update:Update):
+            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.')
+            return self.ENTRY_POINT
 
-    return menu
+    def build_menu(self, buttons, n_cols, header_buttons=None, footer_buttons=None):
+        menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+        if header_buttons:
+            menu.insert(0, header_buttons)
+        if footer_buttons:
+            menu.append(footer_buttons)
 
-def location_btn(update:Update, context:CallbackContext) -> None:
-    user_id = update.effective_chat.id
-    btn_list = []
-    btn_list.append(InlineKeyboardButton("대전광역시", callback_data="대전광역시"))
-    btn_list.append(InlineKeyboardButton("충북", callback_data="충북"))
+        return menu
 
-    show_markup = InlineKeyboardMarkup(build_menu(btn_list, len(btn_list)))
-    update.message.reply_text("선택", reply_markup = show_markup)
+    def location_btn(self, update:Update, context:CallbackContext) -> None:
+        self.sendMessages(update=update)
+        self.user_id = update.effective_chat.id
+        btn_list = []
+        btn_list.append(InlineKeyboardButton("대전광역시", callback_data="대전광역시"))
+        btn_list.append(InlineKeyboardButton("충북", callback_data="충북"))
 
-    return LOCATION_BUTTON
+        show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
+        #update.message.reply_text("거주하시는 지역을 선택해 주세요.", reply_markup = show_markup)
+        context.bot.send_message(chat_id=self.user_id, 
+            text='거주하시는 지역을 선택해 주세요.', 
+            reply_markup=show_markup)
 
-def language_btn(update:Update, context:CallbackContext) -> None:
-    query = update.callback_query.data
-  
-    btn_list = []
-    btn_list.append(InlineKeyboardButton("영어", callback_data="영어"))
-    btn_list.append(InlineKeyboardButton("일본어", callback_data="일본어"))
-    btn_list.append(InlineKeyboardButton("중국어", callback_data="중국어"))
+        return self.LOCATION_BUTTON
 
-    show_markup = InlineKeyboardMarkup(build_menu(btn_list, len(btn_list)))
-    context.bot.send_message(chat_id=update.effective_chat.id, text='선택', reply_markup=show_markup)
+    def language_btn(self, update:Update, context:CallbackContext) -> None:
+        query = update.callback_query.data
+        print(query)
 
-    return LANGUATE_BUTTON
+        btn_list = []
+        btn_list.append(InlineKeyboardButton("영어", callback_data="영어"))
+        btn_list.append(InlineKeyboardButton("일본어", callback_data="일본어"))
+        btn_list.append(InlineKeyboardButton("중국어", callback_data="중국어"))
 
+        show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
+        context.bot.send_message(chat_id=self.user_id, 
+            text='사용하실 언어를 선택해 주세요.', 
+            reply_markup=show_markup)
+
+        return self.LANGUAGE_BUTTON
+
+bot = Cornerstone()
 updater = Updater(token)
-
-main_handler = ConversationHandler(
-            entry_points = [CommandHandler('start',location_btn)],
-            states = {
-                LOCATION_BUTTON : [CallbackQueryHandler(language_btn)],
-                
-                #LANGUATE_BUTTON : [CallbackQueryHandler(language_btn)],
-            },
-            fallbacks = [CommandHandler('cancel',language_btn)],
-
-            map_to_parent={
-                ConversationHandler.END:ConversationHandler.END
-            }
-        )
-
-updater.dispatcher.add_handler(main_handler)
+updater.dispatcher.add_handler(bot.mainHandler)
 updater.start_polling()
 updater.idle()
 
