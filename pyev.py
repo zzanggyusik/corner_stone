@@ -96,10 +96,10 @@ class PEx(BehaviorModelExecutor):
                     messages = [message, "", "", ""]
                     langs = ['ko', 'en', 'zh-cn', 'ja']
                     covid = -10
-                    # while(message[covid+10:].find('코로나') != -1):
-                    #     covid = message.find('코로나')
-                    #     if(covid != -1):
-                    #         message = message[:covid] + '코로나 바이러스 ' + message[covid+3:]
+                    while(message[covid+10:].find('코로나') != -1):
+                        covid = message[covid+10:].find('코로나') + covid + 10
+                        if(covid != -1):
+                            message = message[:covid] + '코로나 바이러스 ' + message[covid+3:]
                     message = message.replace('▲', '\n').replace('▶', '\n').replace('△', '\n')
                     message = '\n'.join(message.split('\n\n'))
                     for i in message.split('\n'):
