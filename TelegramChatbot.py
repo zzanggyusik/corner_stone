@@ -5,8 +5,7 @@ import telegram
 from telegram import *
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import *
-
-token = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
+from config import *
 
 class Cornerstone:
     def __init__(self) -> None:
