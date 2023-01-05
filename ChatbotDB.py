@@ -112,3 +112,14 @@ class ChatbotDB:
                 serarch_data.append("对不起，最近的灾难安全短信不存在。")
         print("[DB] - send complete")
         return serarch_data
+
+    def visited_user(self, con, id):
+        cursor_db = con.cursor()
+        cursor_db.execute("SELECT *FROM user_tb WHERE id=?", (id,))
+        data = cursor_db.fetchall()
+        if len(data) != 0:
+            print("[DB] - ID exist")
+            return True
+        else:
+            print("[DB] - ID not exist")
+            return False

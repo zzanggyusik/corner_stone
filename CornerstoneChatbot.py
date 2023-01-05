@@ -1,5 +1,6 @@
+import telegram
 from telegram import *
-from telegram.ext import CommandHandler
+from telegram.ext import CommandHandler, Filters
 from telegram.ext import *
 from ChatbotDB import *
 import prettytable as pt
@@ -62,12 +63,6 @@ class CornerstoneChatbot:
     '''
     def introduction(self, update:Update):
             update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다. 🙂')
-
-            # DB 연동
-            # self.chatbot_db.user_con = self.chatbot_db.user_connection()
-            # self.chatbot_db.message_con = self.chatbot_db.message_connection()
-            # self.chatbot_db.create_table(self.chatbot_db.user_con)
-
 
     '''
     # 일반 함수
@@ -188,6 +183,7 @@ class CornerstoneChatbot:
             self.language, 
             self.location
         )
+        message = '긴급'
 
         # 긴급 재난 문자 전송
         for i in range(0, len(message)):
@@ -196,6 +192,10 @@ class CornerstoneChatbot:
                 chat_id=self.user_id,
                 text = str_message
             )
+        context.bot.send_message(
+            chat_id=self.user_id,
+            text = message
+        )
     
     '''
     # callback 함수
