@@ -7,8 +7,9 @@ import prettytable as pt
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
+        #============= Updater, Bot ============#
         self.updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
-        self.isAlready = False
+        self.sendingBot = telegram.Bot('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
         #================== DB =================#
         #self.chatbot_db = ChatbotDB()
         #============== User Data ==============#
@@ -18,6 +19,8 @@ class CornerstoneChatbot:
         #============ Return const =============#
         self.LOCATION_BUTTON = 1    
         self.LANGUAGE_BUTTON = 2
+        #=============== Contant ===============#
+        self.isAlready = False
         #================ Main =================#
         '''
         # ConversationHandler를 통해 Handler 흐름 제어
@@ -113,6 +116,26 @@ class CornerstoneChatbot:
         return show_markup
 
     '''
+    # 일반 함수
+    # 시뮬레이션에서 정보가 갱신될 때마다 호출 하면, 사용자에게 메시지 전달
+    '''
+    def sendMessageWithSim(self):
+        if self.isAlready == True:
+            message = self.chatbot_db.search_data(
+                self.chatbot_db.message_con, 
+                self.language, 
+                self.location
+            )
+
+            # 긴급 재난 문자 전송
+            for i in range(0, len(message)):
+                str_message = str(message[i])
+                self.sendingBot.send_message(
+                    chat_id=self.user_id,
+                    text = str_message
+                )
+
+    '''
     # callback 함수
     # ConversationHandler의 entry_point에 할당 된 Handler에서 호출 됨
     # 즉, 챗봇 시작 시, 가장 먼저 호출 되는 Handler
@@ -174,29 +197,25 @@ class CornerstoneChatbot:
         self.language = update.callback_query.data
         print(self.language)
 
-        # self.chatbot_db.dbHandler(
-        #     self.user_id, 
-        #     self.language, 
-        #     self.location
-        # )
-        # message = self.chatbot_db.search_data(
-        #     self.chatbot_db.message_con, 
-        #     self.language, 
-        #     self.location
-        # )
-        message = '긴급'
+        self.chatbot_db.dbHandler(
+            self.user_id, 
+            self.language, 
+            self.location
+        )
+
+        message = self.chatbot_db.search_data(
+            self.chatbot_db.message_con, 
+            self.language, 
+            self.location
+        )
 
         # 긴급 재난 문자 전송
-        # for i in range(0, len(message)):
-        #     str_message = str(message[i])
-        #     context.bot.send_message(
-        #         chat_id=self.user_id,
-        #         text = str_message
-        #     )
-        context.bot.send_message(
-            chat_id=self.user_id,
-            text = message
-        )
+        for i in range(0, len(message)):
+            str_message = str(message[i])
+            context.bot.send_message(
+                chat_id=self.user_id,
+                text = str_message
+            )
         self.isAlready = True
         return ConversationHandler.END
     
@@ -206,8 +225,3 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
-
-    def sendMessageWithSim(self):
-        if self.isAlready == True:
-            b = telegram.Bot('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
-            b.send_message(chat_id=self.user_id, text='send')  
