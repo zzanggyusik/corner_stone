@@ -51,7 +51,8 @@ class CornerstoneChatbot:
 
                 fallbacks = [
                     CommandHandler('cancel',self.fallbackHandler),
-                    CommandHandler('option', self.languageHandler)
+                    CommandHandler('option', self.languageHandler),
+                    CommandHandler('start', self.locationHandler)
                 ],
 
                 map_to_parent = {
@@ -145,6 +146,16 @@ class CornerstoneChatbot:
     '''
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
+
+        if self.isAlready == True:
+            if  self.chatbot_db.visited_user(
+                self.chatbot_db.user_con,
+                self.user_id
+            ) == True:
+                self.messageHandler(update=update, context=context)
+                return self.LANGUAGE_BUTTON
+
+
         self.introduction(update)
         self.showHint(update)
         self.chatbot_db.conDB()
@@ -194,7 +205,8 @@ class CornerstoneChatbot:
     # message : DB에서 얻어 온 실제 재난 문자가 저장 되는 변수
     '''
     def messageHandler(self, update:Update, context:CallbackContext):
-        self.language = update.callback_query.data
+        if self.language == '':
+            self.language = update.callback_query.data
         print(self.language)
 
         self.chatbot_db.dbHandler(
@@ -217,7 +229,7 @@ class CornerstoneChatbot:
                 text = str_message
             )
         self.isAlready = True
-        return ConversationHandler.END
+        # return ConversationHandler.END
     
     '''
     # callback 함수
