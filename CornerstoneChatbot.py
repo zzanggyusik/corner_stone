@@ -62,7 +62,7 @@ class CornerstoneChatbot:
     # self.locationHandler에서 호출 됨, callback 함수 이외에 제일 먼저 호출 되는 함수
     '''
     def introduction(self, update:Update):
-            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.')
+            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다. 🙂')
 
     '''
     # 일반 함수
@@ -142,7 +142,7 @@ class CornerstoneChatbot:
 
         context.bot.send_message(
             chat_id=self.user_id, 
-            text = '거주하는 지역을 선택해 주세요.', 
+            text = '🧭거주하는 지역을 선택해 주세요.', 
             reply_markup = self.createButton(btnText_list)
         )
         return self.LOCATION_BUTTON
@@ -166,7 +166,7 @@ class CornerstoneChatbot:
 
         context.bot.send_message(
             chat_id=self.user_id, 
-            text = '사용하실 언어를 선택해 주세요.', 
+            text = '🌎사용하실 언어를 선택해 주세요.', 
             reply_markup = self.createButton(btnText_list)
         )
         return self.LANGUAGE_BUTTON
