@@ -7,8 +7,10 @@ import prettytable as pt
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
+        self.updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
+        self.isAlready = False
         #================== DB =================#
-        self.chatbot_db = ChatbotDB()
+        #self.chatbot_db = ChatbotDB()
         #============== User Data ==============#
         self.user_id = ''           # 사용자의 ID, self.locationHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageHandler에서 값이 저장 됨
@@ -41,12 +43,11 @@ class CornerstoneChatbot:
 
                 states = {
                     self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageHandler)],
-                    self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)]
+                    self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)],
                 },
 
                 fallbacks = [
                     CommandHandler('cancel',self.fallbackHandler),
-                    CommandHandler('start', self.locationHandler),
                     CommandHandler('option', self.languageHandler)
                 ],
 
@@ -123,7 +124,7 @@ class CornerstoneChatbot:
         self.user_id = update.effective_chat.id
         self.introduction(update)
         self.showHint(update)
-        self.chatbot_db.conDB()
+        #self.chatbot_db.conDB()
        
         btnText_list = [
             '대전광역시', '충청북도'
@@ -173,29 +174,31 @@ class CornerstoneChatbot:
         self.language = update.callback_query.data
         print(self.language)
 
-        self.chatbot_db.dbHandler(
-            self.user_id, 
-            self.language, 
-            self.location
-        )
-        message = self.chatbot_db.search_data(
-            self.chatbot_db.message_con, 
-            self.language, 
-            self.location
-        )
+        # self.chatbot_db.dbHandler(
+        #     self.user_id, 
+        #     self.language, 
+        #     self.location
+        # )
+        # message = self.chatbot_db.search_data(
+        #     self.chatbot_db.message_con, 
+        #     self.language, 
+        #     self.location
+        # )
         message = '긴급'
 
         # 긴급 재난 문자 전송
-        for i in range(0, len(message)):
-            str_message = str(message[i])
-            context.bot.send_message(
-                chat_id=self.user_id,
-                text = str_message
-            )
+        # for i in range(0, len(message)):
+        #     str_message = str(message[i])
+        #     context.bot.send_message(
+        #         chat_id=self.user_id,
+        #         text = str_message
+        #     )
         context.bot.send_message(
             chat_id=self.user_id,
             text = message
         )
+        self.isAlready = True
+        return ConversationHandler.END
     
     '''
     # callback 함수
@@ -203,3 +206,8 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
+
+    def sendMessageWithSim(self):
+        if self.isAlready == True:
+            b = telegram.Bot('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
+            b.send_message(chat_id=self.user_id, text='send')  
