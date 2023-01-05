@@ -10,7 +10,6 @@ TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 class CornerstoneChatbot:
     def __init__(self) -> None:
         
-        
         #============== User Data ==============#
         self.user_id = ''           # 사용자의 ID, self.locationHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageHandler에서 값이 저장 됨
