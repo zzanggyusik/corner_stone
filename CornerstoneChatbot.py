@@ -41,7 +41,7 @@ class CornerstoneChatbot:
                     self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)]
                 },
                 fallbacks = [CommandHandler('cancel',self.fallbackHandler)],
-                map_to_parent={
+                map_to_parent = {
                     ConversationHandler.END:ConversationHandler.END
                 }
             )
