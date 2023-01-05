@@ -5,6 +5,9 @@ from selenium.webdriver.common.by import By
 from googletrans import Translator #pip install googletrans==4.0.0-rc1
 import sqlite3
 from sqlite3 import Error
+from telegram import *
+from telegram.ext import *
+from CornerstoneChatbot import *
 
 
 class PEx(BehaviorModelExecutor):
@@ -14,10 +17,12 @@ class PEx(BehaviorModelExecutor):
         self.insert_state("Wait", Infinite)
         self.insert_state("Generate", 1)
         self.translator = Translator()
-        self.post_num = '-1'
         self.count = 0
         self.driver = webdriver.Chrome("chromedriver")
-
+        self.con = self.connection()
+        # self.create_table(self.con)
+        # self.delete_table(self.con)
+        self.post_num = self.post_number(self.con)
 
         self.insert_input_port("start")
 
@@ -25,12 +30,11 @@ class PEx(BehaviorModelExecutor):
         if port == "start":
             print("[Start]: %s"%datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), end = '\n\n')
             self._cur_state = "Generate"
-        self.con = self.connection()
-        self.create_table(self.con)
-        self.delete_table(self.con)
+        
 
 
     def output(self):
+        bot.set_message_con(self.con)
         self.driver.implicitly_wait(20)
         self.driver.get("https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679")
         self.driver.implicitly_wait(20)
@@ -43,13 +47,16 @@ class PEx(BehaviorModelExecutor):
             new_id = box.find_elements(By.ID, 'disasterSms_tr_%c_MD101_SN'%str(i))
             if(len(new_id) == 1):
                 ID.append(new_id[0].text)
-        index = 0
+        index = 9
         print("[OUT]: %s [ID]: "%datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ID)
         if(ID[0] != self.post_num):
             titles = box.find_elements(By.TAG_NAME, "tr")
-            while(index < 10):
-                if(ID[index] == self.post_num):
-                    break
+            while(index > -1):
+                bot.set_message_con(self.con)
+                print(ID[index])
+                if(ID[index] <= self.post_num):
+                    index -= 1
+                    continue
                 title = titles[index].find_element(By.TAG_NAME, 'a').click()
                 self.driver.implicitly_wait(20)
                 location = self.driver.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text
@@ -150,11 +157,13 @@ class PEx(BehaviorModelExecutor):
                             messages[l] += call + ' '
                     for i in range(len(messages)):
                         for j in local:
-                            self.insert_table(self.con, i, messages[i], j) #데이터 베이스에 번역된 문자열 저장
+                            self.insert_table(self.con, i, messages[i], j, ID[index]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
-                    index += 1
+                    bot.sendMessageWithSim()
+                    index -= 1
                 else: 
                     continue
+
                 print()
             self.post_num = ID[0]
         
@@ -162,9 +171,18 @@ class PEx(BehaviorModelExecutor):
         if self._cur_state == "Generate":
             self._cur_state = "Generate"
 
+    def post_number(self, con):
+      cursor_db = con.cursor()
+      cursor_db.execute("SELECT *FROM eng_tb ORDER BY ROWID DESC LIMIT 1")
+      first_number = cursor_db.fetchall()
+      if(len(first_number) == 0):
+        return '-1'
+      print(first_number)
+      return first_number[0][2]
+
     def connection(self):
         try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-            con = sqlite3.connect('message_db.db')
+            con = sqlite3.connect('message_db.db', check_same_thread = False)
             print("[DB] - connect")
             return con
         except Error: # 에러 출력
@@ -172,22 +190,22 @@ class PEx(BehaviorModelExecutor):
 
     def create_table(self, con):
         cursor_db = con.cursor()
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, region TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, region TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, region TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, region TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, region TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, region TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, region TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, region TEXT, number TEXT)")
         con.commit()
 
-    def insert_table(self, con, index, str_data, region):
+    def insert_table(self, con, index, str_data, region, number):
         cursor_db = con.cursor()
         if(index == 0):
-            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?)', (str_data, region,))
+            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?, ?)', (str_data, region, number,))
         elif(index == 1):
-            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?)', (str_data, region,))
+            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?, ?)', (str_data, region, number,))
         elif(index == 2):
-            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?)', (str_data, region,))
+            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?, ?)', (str_data, region, number,))
         elif(index == 3):
-            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?)', (str_data, region,))
+            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?, ?)', (str_data, region, number,))
         con.commit()
 
     def delete_table(self, con):
@@ -205,6 +223,14 @@ class PEx(BehaviorModelExecutor):
 
 
 
+
+bot = CornerstoneChatbot()
+bot.updater.dispatcher.add_handler(bot.mainHandler)
+bot.updater.start_polling()
+# bot.updater.idle()
+
+
+
 ss = SystemSimulator()
 
 ss.register_engine("first", "REAL_TIME", 1)
@@ -217,3 +243,5 @@ ss.get_engine("first").coupling_relation(None, "start", gen, "start")
 ss.get_engine("first").insert_external_event("start", None)
 
 ss.get_engine("first").simulate()
+
+
