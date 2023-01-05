@@ -1,6 +1,3 @@
-#5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI
-#5907729715
-
 import telegram
 from telegram import *
 from telegram.ext import Updater, CommandHandler
@@ -22,7 +19,6 @@ class Cornerstone:
         self.ENTRY_POINT = 1
         self.LOCATION_BUTTON = 2    
         self.LANGUAGE_BUTTON = 3
-        #self.LANGUAGE_BUTTON2 = 6
         self.SAVE_DATA = 4
         self.CANCEL = 5
         #================= MAIN ================#
@@ -42,7 +38,10 @@ class Cornerstone:
 
                 #cancel, 종료
                 #falbacks : 순서 무관, 조건 만족시 Handler
-                fallbacks = [CommandHandler('option',self.languageButtonHandler), CommandHandler('cancel',self.fallbackHandler)], 
+                fallbacks = [CommandHandler('option',self.languageButtonHandler), 
+                             CommandHandler('cancel',self.fallbackHandler),
+                             CommandHandler('start',self.locationButtonHandler)
+                            ], 
 
                 map_to_parent={
                     ConversationHandler.END:ConversationHandler.END
@@ -57,12 +56,12 @@ class Cornerstone:
 
             #table을 통한 출력
             table = pt.PrettyTable(['function', 'input'])
-            table.align['function'] = 'm'
-            table.align['input'] = 'm'
+            table.align['function'] = 'l'
+            table.align['input'] = 'l'
 
             data = [
                 ('start','/start '),
-                ('option','/option'),
+                ('language','/language'),
                 ('cancel','/cancel')
             ]
             for start, option in data:
@@ -117,10 +116,10 @@ class Cornerstone:
     #언어 설정 버튼
     #self.locationButtonHandler을 통해 생성된 버튼(지역)을 누르면 update.callback_query.data에 해당 버튼의 callback_data 저장
     def languageButtonHandler(self, update:Update, context:CallbackContext):
-        if self.languageButtonHandler == None:
+        if self.location == '': 
             self.location = update.callback_query.data
             print(self.location)
-
+            
         btn_list = []
         btn_list.append(InlineKeyboardButton("영어", callback_data="영어"))
         btn_list.append(InlineKeyboardButton("일본어", callback_data="일본어"))
