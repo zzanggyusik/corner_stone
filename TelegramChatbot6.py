@@ -8,7 +8,13 @@ import sqlite3
 TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 
 class CornerstoneChatbot:
-    def __init__(self) -> None:
+    def __init__(self, update_token) -> None:
+
+        self.updater = Updater(update_token)
+        self.dispatcher = self.updater.dispatcher
+
+        self.engine = 
+
         
         
         #============== User Data ==============#
@@ -146,8 +152,3 @@ class CornerstoneChatbot:
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
 
-bot = CornerstoneChatbot()
-updater = Updater(TOKEN)
-updater.dispatcher.add_handler(bot.mainHandler)
-updater.start_polling()
-updater.idle()

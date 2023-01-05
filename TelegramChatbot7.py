@@ -9,7 +9,6 @@ TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho"
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
-        
         #============== User Data ==============#
         self.user_id = ''           # 사용자의 ID, self.locationHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageHandler에서 값이 저장 됨
@@ -127,6 +126,10 @@ class CornerstoneChatbot:
     def messageHandler2(self, update:Update, context:CallbackContext):
 
         message = '긴급 재난 문자'
+
+        self.msg = []
+        self.updater = Updater(self.config["TelegramChatbot7"]["TOKEN"])
+
         context.bot.send_message(chat_id = self.user_id,
             text=message
         )
@@ -145,8 +148,8 @@ class CornerstoneChatbot:
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
 
-bot = CornerstoneChatbot()
-updater = Updater(TOKEN)
-updater.dispatcher.add_handler(bot.mainHandler)
-updater.start_polling()
-updater.idle()
+# bot = CornerstoneChatbot()
+# updater = Updater(TOKEN)
+# updater.dispatcher.add_handler(bot.mainHandler)
+# updater.start_polling()
+# updater.idle()
