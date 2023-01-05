@@ -148,6 +148,7 @@ class CornerstoneChatbot:
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
 
+
 # bot = CornerstoneChatbot()
 # updater = Updater(TOKEN)
 # updater.dispatcher.add_handler(bot.mainHandler)
