@@ -11,7 +11,7 @@ class CornerstoneChatbot:
         self.updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
         self.sendingBot = telegram.Bot('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
         #================== DB =================#
-        #self.chatbot_db = ChatbotDB()
+        self.chatbot_db = ChatbotDB()
         #============== User Data ==============#
         self.user_id = ''           # 사용자의 ID, self.locationHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageHandler에서 값이 저장 됨
@@ -147,7 +147,7 @@ class CornerstoneChatbot:
         self.user_id = update.effective_chat.id
         self.introduction(update)
         self.showHint(update)
-        #self.chatbot_db.conDB()
+        self.chatbot_db.conDB()
        
         btnText_list = [
             '대전광역시', '충청북도'
