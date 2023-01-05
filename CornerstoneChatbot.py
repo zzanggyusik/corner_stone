@@ -35,12 +35,21 @@ class CornerstoneChatbot:
         # map_to_parent : 정확히 모르겠음, 없으면 오류 남
         '''
         self.mainHandler = ConversationHandler(
-                entry_points = [CommandHandler('start', self.locationHandler)],
+                entry_points = [
+                    CommandHandler('start', self.locationHandler)
+                ],
+
                 states = {
                     self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageHandler)],
                     self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)]
                 },
-                fallbacks = [CommandHandler('cancel',self.fallbackHandler)],
+
+                fallbacks = [
+                    CommandHandler('cancel',self.fallbackHandler),
+                    CommandHandler('start', self.locationHandler),
+                    CommandHandler('option', self.languageHandler)
+                ],
+
                 map_to_parent = {
                     ConversationHandler.END:ConversationHandler.END
                 }
@@ -147,7 +156,8 @@ class CornerstoneChatbot:
     # show_markup : btn_list를 기반으로 만들어진 버튼 메뉴가 담기는 변수
     '''
     def languageHandler(self, update:Update, context:CallbackContext):
-        self.location = update.callback_query.data
+        if self.location == '':
+            self.location = update.callback_query.data
         print(self.location)
 
         btnText_list = [
