@@ -53,7 +53,16 @@ class PEx(BehaviorModelExecutor):
                 title = titles[index].find_element(By.TAG_NAME, 'a').click()
                 self.driver.implicitly_wait(20)
                 location = self.driver.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text
-                print(location)
+                location = location.split(',')
+                local = []
+                if(len(location) > 1):
+                    for i in location:
+                        local.append(i.split()[0])
+                    local = list(set(local))
+                else:
+                    local.append(location[0].split()[0])
+
+                print(local)
                 message = self.driver.find_element(By.CSS_SELECTOR, '#msg_cn').text
                 self.driver.back()
                 #self.driver.implicitly_wait(20)
@@ -87,7 +96,6 @@ class PEx(BehaviorModelExecutor):
                         else:
                             call = message[ca:]
                             message = message[:ca]
-                        call = call.replace('☎', 'Phone number ')
                     if(message.find('☏') != -1):
                         ca = message.find('☏')
                         if(message[ca-1] == '('):
@@ -96,7 +104,6 @@ class PEx(BehaviorModelExecutor):
                         else:
                             call = message[ca:]
                             message = message[:ca]
-                        call = call.replace('☏', 'Phone number ')
 
                     messages = [message, "", "", ""]
                     langs = ['ko', 'en', 'zh-cn', 'ja']
@@ -121,6 +128,15 @@ class PEx(BehaviorModelExecutor):
                                 if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
                                     messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
                                 else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
+                        elif(i.find(')') != -1 and i.find('(') != -1):
+                            s = i.find('(')
+                            e = i.find(')')
+                            for l in range(1, len(langs)):
+                                messages[l] += self.translator.translate(i[:e+1], dest = langs[l], src = 'ko').text  #괄호 안에 있는 문자열을 번역 및 저장
+
+                                if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
+                                    messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
+                                else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
                         else:   #괄호 안에 문자열이 없을 경우
                             for l in range(1, len(langs)):
                                 messages[l] += self.translator.translate(i, dest = langs[l], src = 'ko').text + '. '
@@ -128,12 +144,13 @@ class PEx(BehaviorModelExecutor):
                     #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
                     if(site != ""):
                         for l in range(0, len(langs)):  #추출했던 사이트 이어 붙이기
-                            messages[l] += site
+                            messages[l] += site + ' '
                     if(call != ""):
                         for l in range(0, len(langs)):  #추출했던 전화 번호 이어 붙이기
-                            messages[l] += call
+                            messages[l] += call + ' '
                     for i in range(len(messages)):
-                        self.insert_table(self.con, i, messages[i]) #데이터 베이스에 번역된 문자열 저장
+                        for j in local:
+                            self.insert_table(self.con, i, messages[i], j) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
                     index += 1
                 else: 
@@ -155,22 +172,22 @@ class PEx(BehaviorModelExecutor):
 
     def create_table(self, con):
         cursor_db = con.cursor()
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, region TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, region TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, region TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, region TEXT)")
         con.commit()
 
-    def insert_table(self, con, index, str_data):
+    def insert_table(self, con, index, str_data, region):
         cursor_db = con.cursor()
         if(index == 0):
-            cursor_db.execute('INSERT INTO kr_tb VALUES (?)', (str_data,))
+            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?)', (str_data, region,))
         elif(index == 1):
-            cursor_db.execute('INSERT INTO eng_tb VALUES (?)', (str_data,))
+            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?)', (str_data, region,))
         elif(index == 2):
-            cursor_db.execute('INSERT INTO ch_tb VALUES (?)', (str_data,))
+            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?)', (str_data, region,))
         elif(index == 3):
-            cursor_db.execute('INSERT INTO jp_tb VALUES (?)', (str_data,))
+            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?)', (str_data, region,))
         con.commit()
 
     def delete_table(self, con):
