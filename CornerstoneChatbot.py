@@ -224,5 +224,6 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
+        
     def set_message_con(self, con):
         self.message_con =  con
