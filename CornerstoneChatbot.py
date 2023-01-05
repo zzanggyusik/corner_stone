@@ -1,9 +1,5 @@
-#5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI
-#5907729715
-
-import telegram
 from telegram import *
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import CommandHandler
 from telegram.ext import *
 import prettytable as pt
 
