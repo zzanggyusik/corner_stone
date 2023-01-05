@@ -160,6 +160,7 @@ class PEx(BehaviorModelExecutor):
                             self.insert_table(self.con, i, messages[i], j, ID[index]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
                     bot.sendMessageWithSim()
+                    #self.send_to_user(messages)
                     index -= 1
                 else: 
                     continue
