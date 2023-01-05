@@ -4,12 +4,13 @@ from telegram.ext import CommandHandler, Filters
 from telegram.ext import *
 from ChatbotDB import *
 import prettytable as pt
+import config
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
         #============= Updater, Bot ============#
-        self.updater = Updater('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
-        self.sendingBot = telegram.Bot('5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI')
+        self.updater = Updater(config.TOKEN)
+        self.sendingBot = telegram.Bot(config.TOKEN)
         #================== DB =================#
         self.chatbot_db = ChatbotDB()
         #============== User Data ==============#
