@@ -146,19 +146,18 @@ class CornerstoneChatbot:
     '''
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
-
-        if self.isAlready == True:
-            if  self.chatbot_db.visited_user(
-                self.chatbot_db.user_con,
-                self.user_id
-            ) == True:
-                self.messageHandler(update=update, context=context)
-                return self.LANGUAGE_BUTTON
+        self.chatbot_db.conDB()
+        if  self.chatbot_db.visited_user(
+            self.chatbot_db.user_con,
+            self.user_id
+        ) == True:
+            self.mySendMessage(update=update, context=context)
+            return self.LANGUAGE_BUTTON
 
 
         self.introduction(update)
         self.showHint(update)
-        self.chatbot_db.conDB()
+        
        
         btnText_list = [
             '대전광역시', '충청북도'
@@ -213,8 +212,21 @@ class CornerstoneChatbot:
             self.user_id, 
             self.language, 
             self.location
-        )
+        )   
 
+        self.mySendMessage(update=update, context=context)
+
+        self.isAlready = True
+        # return ConversationHandler.END
+    
+    '''
+    # callback 함수
+    # fallback 인자에 들어간 Handler에서 호출하는 callback 함수
+    '''
+    def fallbackHandler(self, update:Update, context:CallbackContext):
+        update.message.reply_text('이용해 주셔서 감사합니다.')
+
+    def mySendMessage(self, update:Update, context:CallbackContext):
         message = self.chatbot_db.search_data(
             self.chatbot_db.message_con, 
             self.language, 
@@ -228,12 +240,3 @@ class CornerstoneChatbot:
                 chat_id=self.user_id,
                 text = str_message
             )
-        self.isAlready = True
-        # return ConversationHandler.END
-    
-    '''
-    # callback 함수
-    # fallback 인자에 들어간 Handler에서 호출하는 callback 함수
-    '''
-    def fallbackHandler(self, update:Update, context:CallbackContext):
-        update.message.reply_text('이용해 주셔서 감사합니다.')
