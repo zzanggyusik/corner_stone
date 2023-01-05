@@ -22,6 +22,7 @@ class Cornerstone:
         self.ENTRY_POINT = 1
         self.LOCATION_BUTTON = 2    
         self.LANGUAGE_BUTTON = 3
+        #self.LANGUAGE_BUTTON2 = 6
         self.SAVE_DATA = 4
         self.CANCEL = 5
         #================= MAIN ================#
@@ -47,17 +48,6 @@ class Cornerstone:
                     ConversationHandler.END:ConversationHandler.END
                 }
             )
-
-        # self.optionHandler = ConversationHandler(
-        #         entry_points = [CommandHandler('option', self.languageButtonHandler)],
-        #         states = {
-        #             self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.sendMessageHandler)]
-        #         },
-        #         fallbacks=[CommandHandler('cancel',self.fallbackHandler)],
-        #         map_to_parent={
-        #             ConversationHandler.END:ConversationHandler.END
-        #         }
-        # )
     
     #DB연동
     #시작, 메시지 보내기
@@ -126,9 +116,10 @@ class Cornerstone:
     #callback 함수
     #언어 설정 버튼
     #self.locationButtonHandler을 통해 생성된 버튼(지역)을 누르면 update.callback_query.data에 해당 버튼의 callback_data 저장
-    def languageButtonHandler(self, update:Update, context:CallbackContext) -> None:
-        self.location = update.callback_query.data
-        print(self.location)
+    def languageButtonHandler(self, update:Update, context:CallbackContext):
+        if self.languageButtonHandler == None:
+            self.location = update.callback_query.data
+            print(self.location)
 
         btn_list = []
         btn_list.append(InlineKeyboardButton("영어", callback_data="영어"))
@@ -137,19 +128,20 @@ class Cornerstone:
 
         show_markup = InlineKeyboardMarkup(self.build_menu(btn_list, len(btn_list)))
         context.bot.send_message(chat_id=self.user_id, 
-            text='🌎 사용하실 언어를 선택해 주세요.', 
+            text='🌎 사용하실 언어를 c선택해 주세요.', 
             reply_markup=show_markup
             )
 
         return self.LANGUAGE_BUTTON
 
-    #callback함수, DB내용 저장
+    #callback 함수
+    #db내용 저장
     def sendMessageHandler(self, update:Update, context:CallbackContext) -> None:
         self.language = update.callback_query.data
         print(self.language)
-        self.dbHandler(self.user_id, self.language, self.location)
+        self.dbHandler()
 
-        message = self.search_data(self.message_con, self.language)
+        message = '긴급 재난 문자'
 
         # 긴급 재난 문자 전송
         context.bot.send_message(chat_id=self.user_id,
@@ -157,65 +149,11 @@ class Cornerstone:
         )
         return self.SAVE_DATA
     
-    #취소 시 메시지 출력
+    #callback 함수
+    #마무리 멘트 : cancel
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
         return self.CANCEL
-
-    def user_connection(self):
-            try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-                user_con = sqlite3.connect('user_db.db')
-                print("[DB] - user db file connect")
-                return user_con
-            except Error: # 에러 출력
-                print(Error)
-
-    def message_connection(self):
-            try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-                message_con = sqlite3.connect('message_db.db')
-                print("[DB] - message db file connect")
-                return message_con
-            except Error: # 에러 출력
-                print(Error)
-
-    def create_table(self, con):
-        cursor_db = con.cursor()
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS user_tb(id INT, language TEXT, region TEXT)")
-        con.commit()
-        print("[DB] - create")
-
-    def insert_table(self, con, id, language, region):
-        cursor_db = con.cursor()
-        cursor_db.execute('INSERT INTO user_tb VALUES (?, ?, ?)', (id, language, region,))
-        con.commit()
-        print("[DB] - insert")
-
-    def clear_table(self, con):
-        cursor_db = con.cursor()
-        cursor_db.execute("DELETE FROM user_tb")
-        con.commit()
-        print("[DB] - clear")
-
-    def disconnetion(self, con):
-        con.close()
-        print("[DB] - disconnet")
-
-    def search_data(self, con, language):
-        cursor_db = con.cursor()
-        print(language)
-        if language == "영어":
-            cursor_db.execute('SELECT *From eng_tb')
-            str_data = cursor_db.fetchall()
-        elif language == "일본어":
-            cursor_db.execute('SELECT *From jp_tb')
-            str_data = cursor_db.fetchall()
-        else: # 중국어
-            cursor_db.execute('SELECT *From ch_tb')
-            str_data = cursor_db.fetchall()
-        print("[db] - send complete")
-        return str(str_data)
-
-            
 
 bot = Cornerstone()
 updater = Updater(TOKEN)
