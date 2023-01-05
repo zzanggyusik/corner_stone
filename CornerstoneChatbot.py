@@ -143,7 +143,7 @@ class CornerstoneChatbot:
         self.showHint(update)
        
         btnText_list = [
-            '대전광역시', '충북'
+            '대전광역시', '충청북도'
         ]
 
         context.bot.send_message(
