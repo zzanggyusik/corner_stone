@@ -129,6 +129,7 @@ class CornerstoneChatbot:
                 self.chatbot_db.message_con, 
                 self.language, 
                 self.location,
+                self.post_num,
                 mode = 1
             )
 
@@ -147,6 +148,7 @@ class CornerstoneChatbot:
             self.chatbot_db.message_con, 
             self.language, 
             self.location,
+            self.post_num,
             mode = 0
         )
 
@@ -169,14 +171,13 @@ class CornerstoneChatbot:
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
 
-        self.chatbot_db.conDB()
+        self.chatbot_db.user_con = self.chatbot_db.user_connection()
         if  self.chatbot_db.visited_user(
             self.chatbot_db.user_con,
             self.user_id
         ) == True:
             self.mySendMessage(update=update, context=context)
             return self.LANGUAGE_BUTTON
-
 
         self.introduction(update)
         self.showHint(update)
