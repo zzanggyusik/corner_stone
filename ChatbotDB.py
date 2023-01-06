@@ -57,6 +57,7 @@ class ChatbotDB:
     def search_data(self, con, language, region, post_num, mode):
         serarch_data = []
         cursor_db = con.cursor()
+        str_data = []
         print(language, region)
         if region == "대전광역시":
             if language == "영어":
@@ -109,3 +110,14 @@ class ChatbotDB:
         print(serarch_data)
         print("[DB] - send complete")
         return serarch_data
+
+    def visited_user(self, con, id):
+        cursor_db = con.cursor()
+        cursor_db.execute("SELECT *FROM user_tb WHERE id=?", (id,))
+        data = cursor_db.fetchall()
+        if len(data) != 0:
+            print("[DB] - ID exist")
+            return True
+        else:
+            print("[DB] - ID not exist")
+            return False
