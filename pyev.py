@@ -8,6 +8,7 @@ from sqlite3 import Error
 from telegram import *
 from telegram.ext import *
 from CornerstoneChatbot import *
+from ChatbotDB import ChatbotDB
 import re
 import random
 import time
@@ -20,15 +21,18 @@ class PEx(BehaviorModelExecutor):
         self.insert_state("Wait", Infinite)
         self.insert_state("Generate", 1)
         self.translator = Translator()
-        
         self.driver = webdriver.Chrome("chromedriver")
-        self.con = self.connection()
-        bot.chatbot_db.message_con = self.con
-        self.create_table(self.con)
+        self.db_langs = ['kr_tb', 'eng_tb', 'ch_tb', 'jp_tb']
+        self.db_label = ['info', 'keyword', 'region', 'area', 'number']
+        self.db_types = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
+        self.Chatbot = ChatbotDB()
+        self.con = self.Chatbot.connection()
+        bot.chatbot_db.con = self.con
+        self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1)
         #self.delete_table(self.con)
-        self.post_num = self.post_number(self.con)
+        self.post_num = self.Chatbot.post_number(self.con)
         bot.post_num = self.post_num
-        self.count = self.remove_old_data(self.con)
+        self.count = self.Chatbot.remove_old_data(self.con)
         
 
         self.insert_input_port("start")
@@ -185,7 +189,7 @@ class PEx(BehaviorModelExecutor):
                         area = self.translator.translate(area, dest = langs[i], src = 'ko').text
                         keyword = self.translator.translate(keyword, dest = langs[i], src = 'ko').text
                         for j in local:
-                            self.insert_table(self.con, i, messages[i], keyword, j, area, ID[index]) #데이터 베이스에 번역된 문자열 저장
+                            self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1, [i, messages[i], keyword, j, area, ID[index]]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
 
                     bot.post_num = self.post_num    #챗봇의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호 - 1로 초기화
@@ -195,97 +199,30 @@ class PEx(BehaviorModelExecutor):
                     self.count += len(local)
                     index -= 1
                     if(self.count >= 150):
-                        self.count = self.remove_old_data(self.con)
+                        self.count = self.Chatbot.remove_old_data(self.con)
                 else: 
                     continue
 
                 print()
         elif(random.randint(0, 100) % 15 == 0):
             print('send message')
-            self.insert_table(self.con, 0, '%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
-            self.insert_table(self.con, 1, '%s.안녕하세요. 테스트 용 메시지 입니다.(영어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
-            self.insert_table(self.con, 2, '%s.안녕하세요. 테스트 용 메시지 입니다.(중국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
-            self.insert_table(self.con, 3, '%s.안녕하세요. 테스트 용 메시지 입니다.(일본어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
+            self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1, [0, '%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1)])
+            self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1, [1, '%s.안녕하세요. 테스트 용 메시지 입니다.(영어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1)])
+            self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1, [2, '%s.안녕하세요. 테스트 용 메시지 입니다.(중국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1)])
+            self.Chatbot.create_insert_table(self.con, self.db_langs, self.db_label, self.db_types, 1, [3, '%s.안녕하세요. 테스트 용 메시지 입니다.(일본어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1)])
             
             bot.sendMessageWithSim()
-            self.post_num = self.post_number(self.con)
+            self.post_num = self.Chatbot.post_number(self.con)
             bot.post_num = self.post_num
             self.count += 1
             if(self.count >= 150):
-                self.count = self.remove_old_data(self.con)
+                self.count = self.Chatbot.remove_old_data(self.con)
 
 
         
     def int_trans(self):
         if self._cur_state == "Generate":
             self._cur_state = "Generate"
-
-    def post_number(self, con): #db에 저장된 재난 문자 중 가장 최근 문자의 번호를 반환
-      cursor_db = con.cursor()
-      cursor_db.execute("SELECT *FROM eng_tb ORDER BY ROWID DESC LIMIT 1")
-      first_number = cursor_db.fetchall()
-      if(len(first_number) == 0):   #만약 저장된 데이터가 없다면 '-1'을 반환
-        return '-1'
-      return first_number[0][4]
-
-    def connection(self):
-        try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-            con = sqlite3.connect('message_db.db', check_same_thread = False)
-            print("[DB] - connect")
-            return con
-        except Error: # 에러 출력
-            print(Error)
-
-    def create_table(self, con):
-        cursor_db = con.cursor()
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
-        con.commit()
-
-    def insert_table(self, con, index, str_data, keyword, region, area, number):
-        cursor_db = con.cursor()
-        if(index == 0):
-            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
-        elif(index == 1):
-            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
-        elif(index == 2):
-            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
-        elif(index == 3):
-            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
-
-        con.commit()
-
-    def delete_table(self, con):
-        cursor_db = con.cursor()
-        cursor_db.execute("DELETE FROM kr_tb")
-        cursor_db.execute("DELETE FROM eng_tb")
-        cursor_db.execute("DELETE FROM ch_tb")
-        cursor_db.execute("DELETE FROM jp_tb")
-        con.commit()
-
-    def disconnetion(self, con):
-        con.close()
-        print("[DB] - disconnet")
-
-    def remove_old_data(self, con):
-        langs = ['kr', 'eng', 'ch', 'jp']
-        cursor_db = con.cursor()
-        cursor_db.execute("SELECT count(*) from kr_tb")
-        count = cursor_db.fetchone()
-        count = count[0]
-        
-        if count >= 150:
-            for i in range(4):
-                command = "DELETE FROM %s_tb where number<%s"%(langs[i], str(int(self.post_num)-140))
-                cursor_db.execute(command)
-            count -= 10
-        con.commit()
-        return count
-
-
-
 
 
 bot = CornerstoneChatbot()

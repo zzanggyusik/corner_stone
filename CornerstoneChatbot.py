@@ -126,14 +126,13 @@ class CornerstoneChatbot:
     '''
     def sendMessageWithSim(self):
         if(self.isAlready == False):
-            self.chatbot_db.user_con = self.chatbot_db.user_connection()
-            if(self.chatbot_db.visited_user(self.chatbot_db.user_con, self.user_id)):
+            if(self.chatbot_db.visited_user(self.chatbot_db.con, self.user_id)):
                 self.isAlready = True
         if self.isAlready == True:
             print(self.language)
             for lang in self.language:  ##self.language가 리스트 형태
                 message = self.chatbot_db.search_data(
-                    self.chatbot_db.message_con, 
+                    self.chatbot_db.con, 
                     lang, 
                     self.location,
                     self.post_num,
@@ -153,7 +152,7 @@ class CornerstoneChatbot:
         print(self.location)
         for lang in self.language: ##self.language가 리스트 형태
             message = self.chatbot_db.search_data(
-                self.chatbot_db.message_con, 
+                self.chatbot_db.con, 
                 lang, 
                 self.location,
                 self.post_num,
@@ -179,11 +178,11 @@ class CornerstoneChatbot:
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
 
-        self.chatbot_db.user_con = self.chatbot_db.user_connection()
-        self.language = self.chatbot_db.user_language(self.chatbot_db.user_con, self.user_id)
-        self.location = self.chatbot_db.user_location(self.chatbot_db.user_con, self.user_id)
+        self.chatbot_db.con = self.chatbot_db.connection()
+        self.language = self.chatbot_db.user_language(self.chatbot_db.con, self.user_id)
+        self.location = self.chatbot_db.user_location(self.chatbot_db.con, self.user_id)
         if  self.chatbot_db.visited_user(
-            self.chatbot_db.user_con,
+            self.chatbot_db.con,
             self.user_id
         ) == True:
             self.mySendMessage(update=update, context=context)
@@ -252,7 +251,7 @@ class CornerstoneChatbot:
             self.language, 
             self.location
         )   
-        self.language = self.chatbot_db.user_language(self.chatbot_db.user_con, self.user_id)
+        self.language = self.chatbot_db.user_language(self.chatbot_db.con, self.user_id)
         self.mySendMessage(update=update, context=context)
 
         self.isAlready = True
