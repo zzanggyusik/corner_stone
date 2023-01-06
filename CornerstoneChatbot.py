@@ -38,7 +38,7 @@ class CornerstoneChatbot:
         # fallbacks : 순서에 상관없이 특정 조건이 만족하면 Handler 결정
             ex) CommandHandler를 전달 하면, 순서에 상관 없이 comand가 입력 됐을 때, callback 함수가 호출 됨
             Hint) 여러개의 Handler를 전달 할 수 있음
-        # map_to_parent : 정확히 모르겠음, 없으면 오류 남
+        # map_to_parent : ConversationHandler의 종료와 관련 있는 듯함
         '''
         self.mainHandler = ConversationHandler(
                 entry_points = [
@@ -60,7 +60,7 @@ class CornerstoneChatbot:
                     ConversationHandler.END:ConversationHandler.END
                 }
             )
-    #============ Handler, Method ==============#
+    #=============== Method ==================#
     '''
     # 일반 함수
     # 챗봇 소개 및 DB 연동
@@ -137,6 +137,21 @@ class CornerstoneChatbot:
                     text = str_message
                 )
 
+    def mySendMessage(self, update:Update, context:CallbackContext):
+        message = self.chatbot_db.search_data(
+            self.chatbot_db.message_con, 
+            self.language, 
+            self.location
+        )
+
+        # 긴급 재난 문자 전송
+        for i in range(0, len(message)):
+            str_message = str(message[i])
+            context.bot.send_message(
+                chat_id=self.user_id,
+                text = str_message
+            )
+    #=========== Callback Method(Handler) ==============#
     '''
     # callback 함수
     # ConversationHandler의 entry_point에 할당 된 Handler에서 호출 됨
@@ -147,6 +162,7 @@ class CornerstoneChatbot:
     '''
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
+
         self.chatbot_db.conDB()
         if  self.chatbot_db.visited_user(
             self.chatbot_db.user_con,
@@ -159,7 +175,6 @@ class CornerstoneChatbot:
         self.introduction(update)
         self.showHint(update)
         
-       
         btnText_list = [
             '대전광역시', '충청북도'
         ]
@@ -180,7 +195,9 @@ class CornerstoneChatbot:
     # show_markup : btn_list를 기반으로 만들어진 버튼 메뉴가 담기는 변수
     '''
     def languageHandler(self, update:Update, context:CallbackContext):
-        if self.location == '':
+        self.user_id = update.effective_chat.id
+        if update.callback_query != None:
+            print('init self.location!')
             self.location = update.callback_query.data
         print(self.location)
 
@@ -205,8 +222,11 @@ class CornerstoneChatbot:
     # message : DB에서 얻어 온 실제 재난 문자가 저장 되는 변수
     '''
     def messageHandler(self, update:Update, context:CallbackContext):
-        if self.language == '':
+        self.user_id = update.effective_chat.id
+        if update.callback_query != None:
+            print('init self.language')
             self.language = update.callback_query.data
+
         print(self.language)
 
         self.chatbot_db.dbHandler(
@@ -226,18 +246,3 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
-
-    def mySendMessage(self, update:Update, context:CallbackContext):
-        message = self.chatbot_db.search_data(
-            self.chatbot_db.message_con, 
-            self.language, 
-            self.location
-        )
-
-        # 긴급 재난 문자 전송
-        for i in range(0, len(message)):
-            str_message = str(message[i])
-            context.bot.send_message(
-                chat_id=self.user_id,
-                text = str_message
-            )
