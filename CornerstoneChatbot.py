@@ -134,6 +134,8 @@ class CornerstoneChatbot:
                 self.chatbot_db.message_con, 
                 self.language, 
                 self.location
+
+                #====== 시뮬 이용 시 주석 해제 =====#
                 # self.post_num,
                 # mode = 1
             )
@@ -153,6 +155,8 @@ class CornerstoneChatbot:
             self.chatbot_db.message_con, 
             self.language, 
             self.location
+
+            #====== 시뮬 이용 시 주석 해제 =====#
             # self.post_num,
             # mode = 0
         )
@@ -179,8 +183,13 @@ class CornerstoneChatbot:
         self.introduction(update)
         self.showHint(update)
 
+        #====== 시뮬 이용 시 주석 해제 =====#
         #self.chatbot_db.user_con = self.chatbot_db.user_connection()
+
+        #====== 시뮬 이용 시 주석 =====#
         self.chatbot_db.conDB()
+        #=============================#
+
         if  self.chatbot_db.visited_user(
             self.chatbot_db.user_con,
             self.user_id
