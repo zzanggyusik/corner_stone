@@ -22,6 +22,7 @@ class PEx(BehaviorModelExecutor):
         self.count = 0
         self.driver = webdriver.Chrome("chromedriver")
         self.con = self.connection()
+        bot.chatbot_db.message_con = self.con
         # self.create_table(self.con)
         # self.delete_table(self.con)
         self.post_num = self.post_number(self.con)
@@ -185,11 +186,11 @@ class PEx(BehaviorModelExecutor):
                 print()
         # elif(random.randint(0, 100) % 15 == 0):
         #     print('send message')
-        #     self.insert_table(self.con, 1, '안녕하세요. 테스트 용 메시지 입니다.(영어)', '대전광역시', str(int(self.post_num)+1))
-        #     self.insert_table(self.con, 2, '안녕하세요. 테스트 용 메시지 입니다.(중국어)', '대전광역시', str(int(self.post_num)+1))
+        #     self.insert_table(self.con, 1, '안녕하세요. 테스트 용 메시지 입니다.(영어)', '충청북도', str(int(self.post_num)+1))
+        #     self.insert_table(self.con, 2, '안녕하세요. 테스트 용 메시지 입니다.(중국어)', '충청북도', str(int(self.post_num)+1))
         #     bot.sendMessageWithSim()
         #     self.post_num = self.post_number(self.con)
-        #     bot.set_post_num(self.post_num)
+        #     bot.post_num = self.post_num
 
         
     def int_trans(self):
