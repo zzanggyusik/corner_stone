@@ -17,6 +17,8 @@ class CornerstoneChatbot:
         self.user_id = ''           # 사용자의 ID, self.locationHandler에서 값이 저장 됨
         self.location = ''          # 선택한 지역, self.languageHandler에서 값이 저장 됨
         self.language = ''          # 선택한 언어, self.messageHandler에서 값이 저장 됨
+        #=========== Simulation Data ===========#
+        self.post_num = ''
         #============ Return const =============#
         self.LOCATION_BUTTON = 1    
         self.LANGUAGE_BUTTON = 2
@@ -24,21 +26,21 @@ class CornerstoneChatbot:
         self.isAlready = False
         #================ Main =================#
         '''
-        # ConversationHandler를 통해 Handler 흐름 제어
-        # CommandHandler(comand, callback) : 특정 입력(comand)이 들어 왔을 경우 callback 함수를 호출 함.
+        ConversationHandler를 통해 Handler 흐름 제어
+        CommandHandler(comand, callback) : 특정 입력(comand)이 들어 왔을 경우 callback 함수를 호출 함.
             ex) CommandHandler('start', self.MyFunc) : /start가 입력 되면, self.MyFunc이 호출 됨
-        # CallbackQueryHandler(callback) : 다른 Handler에서 Callback이 
+        CallbackQueryHandler(callback) : 다른 Handler에서 Callback이 
             요청되면(update.callback_query.data에 값이 전달 되면) callback 함수를 호출 함.
             issue) CommandHandler의 경우 callback 함수가 종료되도 update.callback_query.data에
                     값을 전달 하지 않아 CallbackQueryHandler가 호출되지 않음
             Hint) CallbackQueryHandler는 버튼이 눌리면, update.callback_query.data에 해당하는 버튼의
                     callback_data가 전달되어 잘 동작함
-        # entry_point : 챗봇이 시작 됐을 때, 가장 먼저 실행 되는 Handler
-        # state : Return const에 따라 호출하는 Handler 결정
-        # fallbacks : 순서에 상관없이 특정 조건이 만족하면 Handler 결정
+        entry_point : 챗봇이 시작 됐을 때, 가장 먼저 실행 되는 Handler
+        state : Return const에 따라 호출하는 Handler 결정
+        fallbacks : 순서에 상관없이 특정 조건이 만족하면 Handler 결정
             ex) CommandHandler를 전달 하면, 순서에 상관 없이 comand가 입력 됐을 때, callback 함수가 호출 됨
             Hint) 여러개의 Handler를 전달 할 수 있음
-        # map_to_parent : ConversationHandler의 종료와 관련 있는 듯함
+        map_to_parent : ConversationHandler의 종료와 관련 있는 듯함
         '''
         self.mainHandler = ConversationHandler(
                 entry_points = [
@@ -126,7 +128,8 @@ class CornerstoneChatbot:
             message = self.chatbot_db.search_data(
                 self.chatbot_db.message_con, 
                 self.language, 
-                self.location
+                self.location,
+                mode = 1
             )
 
             # 긴급 재난 문자 전송
@@ -138,10 +141,13 @@ class CornerstoneChatbot:
                 )
 
     def mySendMessage(self, update:Update, context:CallbackContext):
+        print(self.language)
+        print(self.location)
         message = self.chatbot_db.search_data(
             self.chatbot_db.message_con, 
             self.language, 
-            self.location
+            self.location,
+            mode = 0
         )
 
         # 긴급 재난 문자 전송
