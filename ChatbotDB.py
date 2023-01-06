@@ -12,7 +12,7 @@ class ChatbotDB:
         self.create_table(self.user_con)
 
     def dbHandler(self, id, language, region):
-        user_info = []                  
+        user_info = []                
         user_info.extend([id, language, region])
         self.insert_table(self.user_con, user_info[0], user_info[1], user_info[2])
         self.update_data(id)
