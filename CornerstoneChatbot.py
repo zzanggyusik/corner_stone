@@ -122,9 +122,11 @@ class CornerstoneChatbot:
     def sendMessageWithSim(self):
         if self.isAlready == True:
             message = self.chatbot_db.search_data(
-                self.message_con, 
+                self.chatbot_db.message_con, 
                 self.language, 
-                self.location
+                self.location,
+                self.post_num,
+                mode = 1
             )
 
             # 긴급 재난 문자 전송
@@ -147,7 +149,7 @@ class CornerstoneChatbot:
         self.introduction(update)
         self.showHint(update)
         self.chatbot_db.user_con = self.chatbot_db.user_connection()
-       
+
         btnText_list = [
             '대전광역시', '충청북도'
         ]
@@ -203,9 +205,11 @@ class CornerstoneChatbot:
         )
 
         message = self.chatbot_db.search_data(
-            self.message_con, 
+            self.chatbot_db.message_con, 
             self.language, 
-            self.location
+            self.location,
+            self.post_num,
+            mode = 0
         )
 
         # 긴급 재난 문자 전송
@@ -224,6 +228,9 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
-        
-    def set_message_con(self, con):
-        self.message_con =  con
+
+    # def set_message_con(self, con):
+    #     self.message_con =  con
+
+    def set_post_num(self, post_num):
+        self.post_num = post_num

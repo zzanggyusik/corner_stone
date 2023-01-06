@@ -8,6 +8,8 @@ from sqlite3 import Error
 from telegram import *
 from telegram.ext import *
 from CornerstoneChatbot import *
+import random
+import time
 
 
 class PEx(BehaviorModelExecutor):
@@ -23,6 +25,7 @@ class PEx(BehaviorModelExecutor):
         # self.create_table(self.con)
         # self.delete_table(self.con)
         self.post_num = self.post_number(self.con)
+        bot.set_post_num(self.post_num)
 
         self.insert_input_port("start")
 
@@ -34,7 +37,9 @@ class PEx(BehaviorModelExecutor):
 
 
     def output(self):
-        bot.set_message_con(self.con)
+        #bot.set_message_con(self.con)
+        bot.chatbot_db.message_con = self.con
+        bot.set_post_num(self.post_num)
         self.driver.implicitly_wait(20)
         self.driver.get("https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679")
         self.driver.implicitly_wait(20)
@@ -49,11 +54,10 @@ class PEx(BehaviorModelExecutor):
                 ID.append(new_id[0].text)
         index = 9
         print("[OUT]: %s [ID]: "%datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ID)
-        if(ID[0] != self.post_num):
+        if(ID[0] > self.post_num):
             titles = box.find_elements(By.TAG_NAME, "tr")
             while(index > -1):
-                bot.set_message_con(self.con)
-                print(ID[index])
+                bot.chatbot_db.message_con = self.con
                 if(ID[index] <= self.post_num):
                     index -= 1
                     continue
@@ -121,7 +125,10 @@ class PEx(BehaviorModelExecutor):
                             message = message[:covid] + '코로나 바이러스 ' + message[covid+3:]
                     message = message.replace('▲', '\n').replace('▶', '\n').replace('△', '\n')
                     message = '\n'.join(message.split('\n\n'))
+                    print(message)
                     for i in message.split('\n'):
+                        if(i == '' or i == ' ' or i == '\n'): continue
+                        if(i[0] == ' '): i = i[1:]
                         if(i.find(')') - i.find('(') > 4):  #괄호 안에 문자열이 있을 경우
                             s = i.find('(') #괄호 안 문자열을 따로 번역하기 위한 전처리 과정
                             e = i.find(')')
@@ -159,14 +166,25 @@ class PEx(BehaviorModelExecutor):
                         for j in local:
                             self.insert_table(self.con, i, messages[i], j, ID[index]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
+
+                    bot.set_post_num(self.post_num)
                     bot.sendMessageWithSim()
-                    #self.send_to_user(messages)
+                    self.post_num = ID[index]
+                    bot.set_post_num(self.post_num)
+                    
                     index -= 1
+                    
                 else: 
                     continue
 
                 print()
-            self.post_num = ID[0]
+        elif(random.randint(0, 100) % 15 == 0):
+            print('send message')
+            self.insert_table(self.con, 1, '안녕하세요. 테스트 용 메시지 입니다.', '대전광역시', str(int(self.post_num)+1))
+            bot.sendMessageWithSim()
+            self.post_num = self.post_number(self.con)
+            bot.set_post_num(self.post_num)
+
         
     def int_trans(self):
         if self._cur_state == "Generate":

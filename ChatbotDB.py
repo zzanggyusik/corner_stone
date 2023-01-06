@@ -54,7 +54,7 @@ class ChatbotDB:
         con.close()
         print("[DB] - disconnet")
 
-    def search_data(self, con, language, region):
+    def search_data(self, con, language, region, post_num, mode):
         serarch_data = []
         cursor_db = con.cursor()
         print(language, region)
@@ -62,22 +62,16 @@ class ChatbotDB:
             if language == "영어":
                 cursor_db.execute("SELECT *FROM eng_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("Sorry, the latest disaster safety text does not exist.")
             elif language == "일본어":
                 cursor_db.execute("SELECT *FROM jp_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("申し訳ありませんが、最近災害安全メールが存在しません。")
             elif language == "중국어":
                 cursor_db.execute("SELECT *FROM ch_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("对不起，最近的灾难安全短信不存在。")
 
@@ -85,22 +79,16 @@ class ChatbotDB:
             if language == "영어":
                 cursor_db.execute("SELECT *FROM eng_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("Sorry, the latest disaster safety text does not exist.")
             elif language == "일본어":
                 cursor_db.execute("SELECT *FROM jp_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("申し訳ありませんが、最近災害安全メールが存在しません。")
             elif language == "중국어":
                 cursor_db.execute("SELECT *FROM ch_tb WHERE region=?", (region,))
                 str_data = cursor_db.fetchall()
-                for i in range(0, len(str_data)):
-                    serarch_data.append(str_data[i][0])
                 if len(str_data) == 0:
                     serarch_data.append("对不起，最近的灾难安全短信不存在。")
         else:
@@ -110,6 +98,14 @@ class ChatbotDB:
                 serarch_data.append("申し訳ありませんが、最近災害安全メールが存在しません。")
             else: # 중국어
                 serarch_data.append("对不起，最近的灾难安全短信不存在。")
-        print("[DB] - send complete")
+
+        if(len(str_data) != 0):
+            if(mode == 0):
+                serarch_data.append(str_data[len(str_data)-1][0])
+            elif(mode == 1):
+                for i in range(0, len(str_data)):
+                    if(str_data[i][2] > post_num):
+                        serarch_data.append(str_data[i][0])
         print(serarch_data)
+        print("[DB] - send complete")
         return serarch_data
