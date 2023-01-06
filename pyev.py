@@ -25,7 +25,7 @@ class PEx(BehaviorModelExecutor):
         self.con = self.connection()
         bot.chatbot_db.message_con = self.con
         self.create_table(self.con)
-        self.delete_table(self.con)
+        #self.delete_table(self.con)
         self.post_num = self.post_number(self.con)
         bot.post_num = self.post_num
         self.count = self.remove_old_data(self.con)
@@ -200,19 +200,19 @@ class PEx(BehaviorModelExecutor):
                     continue
 
                 print()
-        # elif(random.randint(0, 100) % 15 == 0):
-        #     print('send message')
-        #     self.insert_table(self.con, 0, '안녕하세요. 테스트 용 메시지 입니다.(한국어)', '충청북도', str(int(self.post_num)+1))
-        #     self.insert_table(self.con, 1, '안녕하세요. 테스트 용 메시지 입니다.(영어)', '충청북도', str(int(self.post_num)+1))
-        #     self.insert_table(self.con, 2, '안녕하세요. 테스트 용 메시지 입니다.(중국어)', '충청북도', str(int(self.post_num)+1))
-        #     self.insert_table(self.con, 3, '안녕하세요. 테스트 용 메시지 입니다.(일본어)', '충청북도', str(int(self.post_num)+1))
+        elif(random.randint(0, 100) % 15 == 0):
+            print('send message')
+            self.insert_table(self.con, 0, '%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
+            self.insert_table(self.con, 1, '%s.안녕하세요. 테스트 용 메시지 입니다.(영어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
+            self.insert_table(self.con, 2, '%s.안녕하세요. 테스트 용 메시지 입니다.(중국어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
+            self.insert_table(self.con, 3, '%s.안녕하세요. 테스트 용 메시지 입니다.(일본어)'%str(int(self.post_num)+1), '병', '충청북도', '충청북도', str(int(self.post_num)+1))
             
-        #     bot.sendMessageWithSim()
-        #     self.post_num = self.post_number(self.con)
-        #     bot.post_num = self.post_num
-        #     self.count += 1
-        #     if(self.count >= 150):
-        #         self.count = self.remove_old_data(self.con)
+            bot.sendMessageWithSim()
+            self.post_num = self.post_number(self.con)
+            bot.post_num = self.post_num
+            self.count += 1
+            if(self.count >= 150):
+                self.count = self.remove_old_data(self.con)
 
 
         
@@ -226,8 +226,7 @@ class PEx(BehaviorModelExecutor):
       first_number = cursor_db.fetchall()
       if(len(first_number) == 0):   #만약 저장된 데이터가 없다면 '-1'을 반환
         return '-1'
-      print(first_number)
-      return first_number[0][2]
+      return first_number[0][4]
 
     def connection(self):
         try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)

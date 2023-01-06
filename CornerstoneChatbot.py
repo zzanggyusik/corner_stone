@@ -125,41 +125,48 @@ class CornerstoneChatbot:
     # 시뮬레이션에서 정보가 갱신될 때마다 호출 하면, 사용자에게 메시지 전달
     '''
     def sendMessageWithSim(self):
+        if(self.isAlready == False):
+            self.chatbot_db.user_con = self.chatbot_db.user_connection()
+            if(self.chatbot_db.visited_user(self.chatbot_db.user_con, self.user_id)):
+                self.isAlready = True
         if self.isAlready == True:
-            message = self.chatbot_db.search_data(
-                self.chatbot_db.message_con, 
-                self.language, 
-                self.location,
-                self.post_num,
-                mode = 1
-            )
-
-            # 긴급 재난 문자 전송
-            for i in range(0, len(message)):
-                str_message = str(message[i])
-                self.sendingBot.send_message(
-                    chat_id=self.user_id,
-                    text = str_message
+            print(self.language)
+            for lang in self.language:  ##self.language가 리스트 형태
+                message = self.chatbot_db.search_data(
+                    self.chatbot_db.message_con, 
+                    lang, 
+                    self.location,
+                    self.post_num,
+                    mode = 1
                 )
+
+                # 긴급 재난 문자 전송
+                for i in range(0, len(message)):
+                    str_message = str(message[i])
+                    self.sendingBot.send_message(
+                        chat_id=self.user_id,
+                        text = str_message
+                    )
 
     def mySendMessage(self, update:Update, context:CallbackContext):
         print(self.language)
         print(self.location)
-        message = self.chatbot_db.search_data(
-            self.chatbot_db.message_con, 
-            self.language, 
-            self.location,
-            self.post_num,
-            mode = 0
-        )
+        for lang in self.language: ##self.language가 리스트 형태
+            message = self.chatbot_db.search_data(
+                self.chatbot_db.message_con, 
+                lang, 
+                self.location,
+                self.post_num,
+                mode = 0
+            )
 
         # 긴급 재난 문자 전송
-        for i in range(0, len(message)):
-            str_message = str(message[i])
-            context.bot.send_message(
-                chat_id=self.user_id,
-                text = str_message
-            )
+            for i in range(0, len(message)):
+                str_message = str(message[i])
+                context.bot.send_message(
+                    chat_id=self.user_id,
+                    text = str_message
+                )
     #=========== Callback Method(Handler) ==============#
     '''
     # callback 함수
@@ -173,6 +180,8 @@ class CornerstoneChatbot:
         self.user_id = update.effective_chat.id
 
         self.chatbot_db.user_con = self.chatbot_db.user_connection()
+        self.language = self.chatbot_db.user_language(self.chatbot_db.user_con, self.user_id)
+        self.location = self.chatbot_db.user_location(self.chatbot_db.user_con, self.user_id)
         if  self.chatbot_db.visited_user(
             self.chatbot_db.user_con,
             self.user_id
@@ -243,7 +252,7 @@ class CornerstoneChatbot:
             self.language, 
             self.location
         )   
-
+        self.language = self.chatbot_db.user_language(self.chatbot_db.user_con, self.user_id)
         self.mySendMessage(update=update, context=context)
 
         self.isAlready = True

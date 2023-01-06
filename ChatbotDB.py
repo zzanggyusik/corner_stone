@@ -13,13 +13,15 @@ class ChatbotDB:
 
     def dbHandler(self, id, language, region):
         user_info = []                  
+        langs = ['영어', '중국어', '일본어']
         user_info.extend([id, language, region])
-        self.insert_table(self.user_con, user_info[0], user_info[1], user_info[2])
-        self.update_data(id)
+        if(language in langs):
+            self.insert_table(self.user_con, user_info[0], user_info[1], user_info[2])
+            self.update_data(id)
 
     def user_connection(self):
         try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-            user_con = sqlite3.connect('user_db.db')
+            user_con = sqlite3.connect('user_db.db', check_same_thread=False)
             print("[DB] - user db file connect")
             return user_con
         except Error: # 에러 출력
@@ -27,7 +29,7 @@ class ChatbotDB:
 
     def message_connection(self):
             try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
-                message_con = sqlite3.connect('message_db.db', check_same_thread=True)
+                message_con = sqlite3.connect('message_db.db', check_same_thread=False)
                 print("[DB] - message db file connect")
                 return message_con
             except Error: # 에러 출력
@@ -41,9 +43,12 @@ class ChatbotDB:
 
     def insert_table(self, con, id, language, region):
         cursor_db = con.cursor()
-        cursor_db.execute('INSERT INTO user_tb VALUES (?, ?, ?)', (id, language, region,))
-        con.commit()
-        print("[DB] - insert")
+        if(self.check_data(con, id, language)):
+            cursor_db.execute('INSERT INTO user_tb VALUES (?, ?, ?)', (id, language, region,))
+            con.commit()
+            print("[DB] - insert")
+        else:
+            print("[DB] - not_insert")
 
     def clear_table(self, con):
         cursor_db = con.cursor()
@@ -59,7 +64,7 @@ class ChatbotDB:
         serarch_data = []
         cursor_db = con.cursor()
         str_data = []
-        print(language, region)
+        print(language, region, 1)
         if language == '영어':
             cursor_db.execute("SELECT *FROM eng_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
             str_data = cursor_db.fetchall()
@@ -85,6 +90,7 @@ class ChatbotDB:
                 for i in range(0, len(str_data)):
                     if(str_data[i][2] > post_num):
                         serarch_data.append(str_data[i][0])
+        print(str_data)
         print(serarch_data)
         print("[DB] - send complete")
         return serarch_data
@@ -108,3 +114,38 @@ class ChatbotDB:
         cusor_db.execute("update user_tb set region=? where region=?", (region_data, '',))
         self.user_con.commit()
         print(f"[DB] - update {id} -> {region_data}")
+
+    def check_data(self, con, id, language):
+        cursor_db = con.cursor()
+        cursor_db.execute("SELECT *FROM user_tb WHERE id=? AND language=?", (id,language,))
+        check_data = cursor_db.fetchall()
+        print(check_data)
+        con.commit()
+        if len(check_data) != 0:
+            print("[DB] - check_data -> True")
+            return False
+        else:
+            print("[DB] - check_data -> False")
+            return True
+
+    def user_language(self, con, id):
+        use_language = []
+        cursor_db = con.cursor()
+        cursor_db.execute("select *from user_tb where id=?", (id,))
+        user_data = cursor_db.fetchall()
+        for i in range(0, len(user_data)):
+            use_language.append(user_data[i][1])
+        con.commit()
+        print(f"[DB] - {id} -> {use_language}")
+        return use_language
+    
+    def user_location(self, con, id):
+        use_location = ''
+        cursor_db = con.cursor()
+        cursor_db.execute("select *from user_tb where id=?", (id,))
+        user_data = cursor_db.fetchall()
+        if(len(user_data) != 0):
+            use_location = user_data[0][2]
+        con.commit()
+        print(f"[DB] - {id} -> {use_location}")
+        return use_location
