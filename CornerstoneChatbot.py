@@ -79,7 +79,7 @@ class CornerstoneChatbot:
     # self.locationHandler에서 호출 됨, callback 함수 이외에 제일 먼저 호출 되는 함수
     '''
     def introduction(self, update:Update):
-            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다. 🙂')
+            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.🙂')
 
     '''
     # 일반 함수
@@ -278,5 +278,10 @@ class CornerstoneChatbot:
             self.chatbot_db.user_con,
             self.user_id,
             self.language
+        )
+
+        context.bot.send_message(
+                chat_id=self.user_id,
+                text = self.language + '가 삭제되었습니다.🙂'
         )
         return self.LANGUAGE_BUTTON
