@@ -128,9 +128,9 @@ class CornerstoneChatbot:
             message = self.chatbot_db.search_data(
                 self.chatbot_db.message_con, 
                 self.language, 
-                self.location,
-                self.post_num,
-                mode = 1
+                self.location
+                # self.post_num,
+                # mode = 1
             )
 
             # 긴급 재난 문자 전송
@@ -147,9 +147,9 @@ class CornerstoneChatbot:
         message = self.chatbot_db.search_data(
             self.chatbot_db.message_con, 
             self.language, 
-            self.location,
-            self.post_num,
-            mode = 0
+            self.location
+            # self.post_num,
+            # mode = 0
         )
 
         # 긴급 재난 문자 전송
@@ -171,7 +171,8 @@ class CornerstoneChatbot:
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
 
-        self.chatbot_db.user_con = self.chatbot_db.user_connection()
+        #self.chatbot_db.user_con = self.chatbot_db.user_connection()
+        self.chatbot_db.conDB()
         if  self.chatbot_db.visited_user(
             self.chatbot_db.user_con,
             self.user_id

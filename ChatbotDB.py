@@ -15,6 +15,7 @@ class ChatbotDB:
         user_info = []                  
         user_info.extend([id, language, region])
         self.insert_table(self.user_con, user_info[0], user_info[1], user_info[2])
+        self.update_data(id)
 
     def user_connection(self):
         try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
@@ -123,3 +124,12 @@ class ChatbotDB:
         else:
             print("[DB] - ID not exist")
             return False
+
+    def update_data(self, id):
+        cusor_db = self.user_con.cursor()
+        cusor_db.execute("SELECT *FROM user_tb WHERE id=?", (id,))
+        find_data = cusor_db.fetchone()
+        region_data = find_data[2]
+        cusor_db.execute("update user_tb set region=? where region=?", (region_data, '',))
+        self.user_con.commit()
+        print(f"[DB] - update {id} -> {region_data}")
