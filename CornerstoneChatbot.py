@@ -8,6 +8,13 @@ import config
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
+        #============ Command Data =============#
+        self.command_list = [
+            # (command, hint)
+            ('start', '/start'),
+            ('option','/option'),
+            ('delete', '/delete')
+        ]
         #============= Updater, Bot ============#
         self.updater = Updater(config.TOKEN)
         self.sendingBot = telegram.Bot(config.TOKEN)
@@ -22,6 +29,7 @@ class CornerstoneChatbot:
         #============ Return const =============#
         self.LOCATION_BUTTON = 1    
         self.LANGUAGE_BUTTON = 2
+        self.DELETE_BUTTON = 3
         #=============== Contant ===============#
         self.isAlready = False
         #================ Main =================#
@@ -50,12 +58,13 @@ class CornerstoneChatbot:
                 states = {
                     self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageHandler)],
                     self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)],
+                    self.DELETE_BUTTON : [CallbackQueryHandler(self.deleteLangHandler)]
                 },
 
                 fallbacks = [
-                    CommandHandler('cancel',self.fallbackHandler),
-                    CommandHandler('option', self.languageHandler),
-                    CommandHandler('start', self.locationHandler)
+                    CommandHandler(self.command_list[0][0], self.locationHandler),  # start
+                    CommandHandler(self.command_list[1][0], self.languageHandler), # option
+                    CommandHandler(self.command_list[2][0], self.deleteButtonHandler), # delete
                 ],
 
                 map_to_parent = {
@@ -82,12 +91,8 @@ class CornerstoneChatbot:
             table.align['function'] = 'm'
             table.align['input'] = 'm'
 
-            data = [
-                ('start','/start '),
-                ('option','/option'),
-            ]
-            for start, option in data:
-                table.add_row([start, option])
+            for func, enter in self.command_list:
+                table.add_row([func, enter])
 
             update.message.reply_text(f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
 
@@ -171,6 +176,9 @@ class CornerstoneChatbot:
     def locationHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
 
+        self.introduction(update)
+        self.showHint(update)
+
         #self.chatbot_db.user_con = self.chatbot_db.user_connection()
         self.chatbot_db.conDB()
         if  self.chatbot_db.visited_user(
@@ -179,9 +187,6 @@ class CornerstoneChatbot:
         ) == True:
             self.mySendMessage(update=update, context=context)
             return self.LANGUAGE_BUTTON
-
-        self.introduction(update)
-        self.showHint(update)
         
         btnText_list = [
             '대전광역시', '충청북도'
@@ -247,10 +252,31 @@ class CornerstoneChatbot:
 
         self.isAlready = True
         # return ConversationHandler.END
-    
-    '''
-    # callback 함수
-    # fallback 인자에 들어간 Handler에서 호출하는 callback 함수
-    '''
-    def fallbackHandler(self, update:Update, context:CallbackContext):
-        update.message.reply_text('이용해 주셔서 감사합니다.')
+
+    def deleteButtonHandler(self, update:Update, context:CallbackContext):
+        self.user_id = update.effective_chat.id
+
+        btnText_list = [
+            '영어', '일본어', '중국어'
+        ]
+
+        context.bot.send_message(
+            chat_id=self.user_id, 
+            text = '🌎삭제하실 언어를 선택해 주세요.', 
+            reply_markup = self.createButton(btnText_list)
+        )
+        
+        return self.DELETE_BUTTON
+
+    def deleteLangHandler(self, update:Update, context:CallbackContext):
+        self.user_id = update.effective_chat.id
+
+        if update.callback_query != None:
+            self.language = update.callback_query.data
+
+        self.chatbot_db.remove_data(
+            self.chatbot_db.user_con,
+            self.user_id,
+            self.language
+        )
+        return self.LANGUAGE_BUTTON

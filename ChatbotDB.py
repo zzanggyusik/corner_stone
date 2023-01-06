@@ -133,3 +133,9 @@ class ChatbotDB:
         cusor_db.execute("update user_tb set region=? where region=?", (region_data, '',))
         self.user_con.commit()
         print(f"[DB] - update {id} -> {region_data}")
+
+    def remove_data(self, con, id, language):
+        cursor_db = con.cursor()
+        cursor_db.execute("delete FROM user_tb WHERE id = ? AND language = ?", (id, language,))
+        con.commit()
+        print(f"[DB] - remove {id}:{language}")
