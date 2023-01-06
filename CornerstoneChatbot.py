@@ -1,6 +1,6 @@
 import telegram
 from telegram import *
-from telegram.ext import CommandHandler, Filters
+from telegram.ext import CommandHandler
 from telegram.ext import *
 from ChatbotDB import *
 import prettytable as pt
