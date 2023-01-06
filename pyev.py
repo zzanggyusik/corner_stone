@@ -8,6 +8,7 @@ from sqlite3 import Error
 from telegram import *
 from telegram.ext import *
 from CornerstoneChatbot import *
+import re
 import random
 import time
 
@@ -19,14 +20,16 @@ class PEx(BehaviorModelExecutor):
         self.insert_state("Wait", Infinite)
         self.insert_state("Generate", 1)
         self.translator = Translator()
-        self.count = 0
+        
         self.driver = webdriver.Chrome("chromedriver")
         self.con = self.connection()
         bot.chatbot_db.message_con = self.con
-        # self.create_table(self.con)
-        # self.delete_table(self.con)
+        self.create_table(self.con)
+        self.delete_table(self.con)
         self.post_num = self.post_number(self.con)
         bot.post_num = self.post_num
+        self.count = self.remove_old_data(self.con)
+        
 
         self.insert_input_port("start")
 
@@ -38,7 +41,6 @@ class PEx(BehaviorModelExecutor):
 
 
     def output(self):
-        #bot.set_message_con(self.con)
         bot.chatbot_db.message_con = self.con   #챗봇의 db 커서를 시뮬레이션의 커서로 초기화
         bot.post_num = self.post_num            #챗봇의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
         while(1):
@@ -53,11 +55,19 @@ class PEx(BehaviorModelExecutor):
         self.driver.implicitly_wait(20)
         box = boxs.find_element(By.ID, 'disasterSms_tr')
         ID = []
+        div = [] 
+        AREA = []
+
         for i in range(10):
             self.driver.implicitly_wait(20)
             new_id = box.find_elements(By.ID, 'disasterSms_tr_%c_MD101_SN'%str(i))  #재난 문자의 번호 저장
+            div_id = box.find_elements(By.ID, 'disasterSms_tr_%c_DSSTR_SE_NM'%str(i))   #재난 문자의 종류 저장
+            area_id = box.find_elements(By.CSS_SELECTOR, '#disasterSms_tr_%c_apiData1 > td:nth-child(4)'%str(i))    #재난 문자의 지역 저장
+
             if(len(new_id) == 1):
                 ID.append(new_id[0].text)
+                div.append(div_id[0].text)  
+                AREA.append(area_id[0].text) 
         index = 9
         print("[OUT]: %s [ID]: "%datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ID)
         if(ID[0] > self.post_num):  #재난 문자가 업데이트 되었을 때
@@ -169,28 +179,41 @@ class PEx(BehaviorModelExecutor):
                         for l in range(0, len(langs)):  #추출했던 전화 번호 이어 붙이기
                             messages[l] += call + ' '
                     for i in range(len(messages)):
+                        area = AREA[index]
+                        area = re.sub('[^ㄱ-힗]', '', area)
+                        keyword = div[index]
+                        area = self.translator.translate(area, dest = langs[i], src = 'ko').text
+                        keyword = self.translator.translate(keyword, dest = langs[i], src = 'ko').text
                         for j in local:
-                            self.insert_table(self.con, i, messages[i], j, ID[index]) #데이터 베이스에 번역된 문자열 저장
+                            self.insert_table(self.con, i, messages[i], keyword, j, area, ID[index]) #데이터 베이스에 번역된 문자열 저장
                         print(messages[i])
 
                     bot.post_num = self.post_num    #챗봇의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호 - 1로 초기화
                     bot.sendMessageWithSim()        #챗봇에 메시지 출력
                     self.post_num = ID[index]       #시뮬레이션의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
                     bot.post_num = self.post_num    #챗봇의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
-                    
+                    self.count += len(local)
                     index -= 1
-                    
+                    if(self.count >= 150):
+                        self.count = self.remove_old_data(self.con)
                 else: 
                     continue
 
                 print()
         # elif(random.randint(0, 100) % 15 == 0):
         #     print('send message')
+        #     self.insert_table(self.con, 0, '안녕하세요. 테스트 용 메시지 입니다.(한국어)', '충청북도', str(int(self.post_num)+1))
         #     self.insert_table(self.con, 1, '안녕하세요. 테스트 용 메시지 입니다.(영어)', '충청북도', str(int(self.post_num)+1))
         #     self.insert_table(self.con, 2, '안녕하세요. 테스트 용 메시지 입니다.(중국어)', '충청북도', str(int(self.post_num)+1))
+        #     self.insert_table(self.con, 3, '안녕하세요. 테스트 용 메시지 입니다.(일본어)', '충청북도', str(int(self.post_num)+1))
+            
         #     bot.sendMessageWithSim()
         #     self.post_num = self.post_number(self.con)
         #     bot.post_num = self.post_num
+        #     self.count += 1
+        #     if(self.count >= 150):
+        #         self.count = self.remove_old_data(self.con)
+
 
         
     def int_trans(self):
@@ -216,22 +239,23 @@ class PEx(BehaviorModelExecutor):
 
     def create_table(self, con):
         cursor_db = con.cursor()
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, region TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, region TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, region TEXT, number TEXT)")
-        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, region TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS kr_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS eng_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS ch_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
+        cursor_db.execute("CREATE TABLE IF NOT EXISTS jp_tb(info TEXT, keyword TEXT, region TEXT, area TEXT, number TEXT)")
         con.commit()
 
-    def insert_table(self, con, index, str_data, region, number):
+    def insert_table(self, con, index, str_data, keyword, region, area, number):
         cursor_db = con.cursor()
         if(index == 0):
-            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?, ?)', (str_data, region, number,))
+            cursor_db.execute('INSERT INTO kr_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
         elif(index == 1):
-            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?, ?)', (str_data, region, number,))
+            cursor_db.execute('INSERT INTO eng_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
         elif(index == 2):
-            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?, ?)', (str_data, region, number,))
+            cursor_db.execute('INSERT INTO ch_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
         elif(index == 3):
-            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?, ?)', (str_data, region, number,))
+            cursor_db.execute('INSERT INTO jp_tb VALUES (?, ?, ?, ?, ?)', (str_data, keyword, region, area, number,))
+
         con.commit()
 
     def delete_table(self, con):
@@ -245,6 +269,21 @@ class PEx(BehaviorModelExecutor):
     def disconnetion(self, con):
         con.close()
         print("[DB] - disconnet")
+
+    def remove_old_data(self, con):
+        langs = ['kr', 'eng', 'ch', 'jp']
+        cursor_db = con.cursor()
+        cursor_db.execute("SELECT count(*) from kr_tb")
+        count = cursor_db.fetchone()
+        count = count[0]
+        
+        if count >= 150:
+            for i in range(4):
+                command = "DELETE FROM %s_tb where number<%s"%(langs[i], str(int(self.post_num)-140))
+                cursor_db.execute(command)
+            count -= 10
+        con.commit()
+        return count
 
 
 
