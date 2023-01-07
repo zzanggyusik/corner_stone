@@ -6,6 +6,7 @@ from ChatbotDB import *
 import prettytable as pt
 import config
 
+
 class CornerstoneChatbot:
     def __init__(self) -> None:
         #============ Command Data =============#
