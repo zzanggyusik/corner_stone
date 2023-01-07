@@ -51,7 +51,6 @@ class ChatbotDB:
             value[1] = "\'\'".join(value[1].split("\'"))
             value[1] = "\"\"".join(value[1].split("\""))
             values = ','.join(["\'" + str(i) + "\'" for i in value[1:]])
-            print(value[1])
             cursor_db.execute(f'INSERT INTO {tb_name[value[0]]}({col_name}) VALUES({values})')
         con.commit()
         print("[DB] - insert")
@@ -76,7 +75,6 @@ class ChatbotDB:
         serarch_data = []
         cursor_db = con.cursor()
         str_data = []
-        print(language, region, 1)
         if language == '영어':
             cursor_db.execute("SELECT *FROM eng_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
             str_data = cursor_db.fetchall()
@@ -100,10 +98,8 @@ class ChatbotDB:
                 serarch_data.append(str_data[len(str_data)-1][0])
             elif(mode == 1):
                 for i in range(0, len(str_data)):
-                    if(str_data[i][2] > post_num):
+                    if(str_data[i][4] > post_num):
                         serarch_data.append(str_data[i][0])
-        print(str_data)
-        print(serarch_data)
         print("[DB] - send complete")
         return serarch_data
 
