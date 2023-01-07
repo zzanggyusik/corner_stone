@@ -284,9 +284,7 @@ class CornerstoneChatbot:
             self.language = update.callback_query.data
 
         self.chatbot_db.remove_data(
-            self.chatbot_db.user_con,
-            self.user_id,
-            self.language
+            self.chatbot_db.con
         )
 
         context.bot.send_message(

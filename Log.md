@@ -31,4 +31,12 @@
   맞다면 Line 48, 80에 bot.chatbot_db.message_con은 무엇을 의미하는지(message_con 변수를 생성하는 거?)
   왜 생성자에서는 chatbot_db.con을 쓰는데 위는 message_con을 쓰는지,
 
-* 
+
+# 2023-01-07 16:33 작성
+ 1차 시연
+1. /start 입력 시
+    - user_id가 DB에 존재하지 않으면 메뉴를 띄워주고, 지역과 언어를 선택 할 수 있게 제공
+    - user_id가 DB에 존재하면, DB에 저장 된 언어로 번역된 재난 문자 전송
+2. /option 입력 시
+    - 새로운 언어를 추가할 수 있는 메뉴제공
+    - 언어 선택 시, DB에 저장
