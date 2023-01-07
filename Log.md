@@ -22,3 +22,13 @@
             /start를 통해 ConversationHandler가 작동해야 self.user_id에 값이 들어가는데,
             아무것도 입력하지 않았을 경우에도 sendMessageWithSim()은 호출될 수 있어서 
             챗봇을 실행하고 가만히 있는 상태면 self.user_id가 없어서 문제가 될것으로 예상
+
+
+* PEx 클래스 생성자에 bot.chatbot_db.con, bot.post_num등 외부에 선언 된 bot을 사용하는 게 맞는지,
+ 맞다면 인자로 받아서 하는 게 더 안전할 거 같은데 어떻게 생각하는지
+
+* DB 파일이 message_db와 userID_db가 합쳐진게 Corner_db 인지,
+  맞다면 Line 48, 80에 bot.chatbot_db.message_con은 무엇을 의미하는지(message_con 변수를 생성하는 거?)
+  왜 생성자에서는 chatbot_db.con을 쓰는데 위는 message_con을 쓰는지,
+
+* 
