@@ -4,8 +4,9 @@ from telegram.ext import CommandHandler
 from telegram.ext import *
 from ChatbotDB import *
 import prettytable as pt
-import config
 
+# TOKEN = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
+TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to'
 
 class CornerstoneChatbot:
     def __init__(self) -> None:
@@ -17,8 +18,8 @@ class CornerstoneChatbot:
             ('delete', '/delete')
         ]
         #============= Updater, Bot ============#
-        self.updater = Updater(config.TOKEN)
-        self.sendingBot = telegram.Bot(config.TOKEN)
+        self.updater = Updater(TOKEN)
+        self.sendingBot = telegram.Bot(TOKEN)
         #================== DB =================#
         self.chatbot_db = ChatbotDB()
         #============== User Data ==============#
@@ -52,26 +53,26 @@ class CornerstoneChatbot:
         map_to_parent : ConversationHandler의 종료와 관련 있는 듯함
         '''
         self.mainHandler = ConversationHandler(
-                entry_points = [
-                    CommandHandler('start', self.locationHandler)
-                ],
+            entry_points = [
+                CommandHandler('start', self.locationHandler)
+            ],
 
-                states = {
-                    self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageHandler)],
-                    self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)],
-                    self.DELETE_BUTTON : [CallbackQueryHandler(self.deleteLangHandler)]
-                },
+            states = {
+                self.LOCATION_BUTTON : [CallbackQueryHandler(self.languageHandler)],
+                self.LANGUAGE_BUTTON : [CallbackQueryHandler(self.messageHandler)],
+                self.DELETE_BUTTON : [CallbackQueryHandler(self.deleteLangHandler)]
+            },
 
-                fallbacks = [
-                    CommandHandler(self.command_list[0][0], self.locationHandler),  # start
-                    CommandHandler(self.command_list[1][0], self.languageHandler), # option
-                    CommandHandler(self.command_list[2][0], self.deleteButtonHandler), # delete
-                ],
+            fallbacks = [
+                CommandHandler(self.command_list[0][0], self.locationHandler),  # start
+                CommandHandler(self.command_list[1][0], self.languageHandler), # option
+                CommandHandler(self.command_list[2][0], self.deleteButtonHandler), # delete
+            ],
 
-                map_to_parent = {
-                    ConversationHandler.END:ConversationHandler.END
-                }
-            )
+            map_to_parent = {
+                ConversationHandler.END:ConversationHandler.END
+            }
+        )
     #=============== Method ==================#
     '''
     # 일반 함수
@@ -80,7 +81,7 @@ class CornerstoneChatbot:
     # self.locationHandler에서 호출 됨, callback 함수 이외에 제일 먼저 호출 되는 함수
     '''
     def introduction(self, update:Update):
-            update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다.🙂')
+        update.message.reply_text('안녕하세요, 코너스톤 챗봇입니다. 🙂')
 
     '''
     # 일반 함수
@@ -88,14 +89,14 @@ class CornerstoneChatbot:
     # self.locationHandler에서 호출 됨
     '''    
     def showHint(self, update:Update):
-            table = pt.PrettyTable(['function', 'enter'])
-            table.align['function'] = 'm'
-            table.align['input'] = 'm'
+        table = pt.PrettyTable(['function', 'enter'])
+        table.align['function'] = 'm'
+        table.align['input'] = 'm'
 
-            for func, enter in self.command_list:
-                table.add_row([func, enter])
+        for func, enter in self.command_list:
+            table.add_row([func, enter])
 
-            update.message.reply_text(f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
+        update.message.reply_text(f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
 
     '''
     # 일반 함수
@@ -165,12 +166,12 @@ class CornerstoneChatbot:
             )
 
         # 긴급 재난 문자 전송
-            for i in range(0, len(message)):
-                str_message = str(message[i])
-                context.bot.send_message(
-                    chat_id=self.user_id,
-                    text = str_message
-                )
+        for i in range(0, len(message)):
+            str_message = str(message[i])
+            context.bot.send_message(
+                chat_id=self.user_id,
+                text = str_message
+            )
     #=========== Callback Method(Handler) ==============#
     '''
     # callback 함수
@@ -256,11 +257,18 @@ class CornerstoneChatbot:
             self.language, 
             self.location
         )   
-
+        self.language = self.chatbot_db.user_language(self.chatbot_db.con, self.user_id)
         self.mySendMessage(update=update, context=context)
 
         self.isAlready = True
         # return ConversationHandler.END
+    
+    '''
+    # callback 함수
+    # fallback 인자에 들어간 Handler에서 호출하는 callback 함수
+    '''
+    def fallbackHandler(self, update:Update, context:CallbackContext):
+        update.message.reply_text('이용해 주셔서 감사합니다.')
 
     def deleteButtonHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
@@ -284,7 +292,42 @@ class CornerstoneChatbot:
             self.language = update.callback_query.data
 
         self.chatbot_db.remove_data(
-            self.chatbot_db.con
+            self.chatbot_db.user_con,
+            self.user_id,
+            self.language
+        )
+
+        context.bot.send_message(
+                chat_id=self.user_id,
+                text = self.language + '가 삭제되었습니다.🙂'
+        )
+        return self.LANGUAGE_BUTTON
+
+    def deleteButtonHandler(self, update:Update, context:CallbackContext):
+        self.user_id = update.effective_chat.id
+
+        btnText_list = [
+            '영어', '일본어', '중국어'
+        ]
+
+        context.bot.send_message(
+            chat_id=self.user_id, 
+            text = '🌎삭제하실 언어를 선택해 주세요.', 
+            reply_markup = self.createButton(btnText_list)
+        )
+        
+        return self.DELETE_BUTTON
+
+    def deleteLangHandler(self, update:Update, context:CallbackContext):
+        self.user_id = update.effective_chat.id
+
+        if update.callback_query != None:
+            self.language = update.callback_query.data
+
+        self.chatbot_db.remove_data(
+            self.chatbot_db.con,
+            self.user_id,
+            self.language
         )
 
         context.bot.send_message(
