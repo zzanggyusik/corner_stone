@@ -64,9 +64,16 @@ class CornerstoneChatbot:
     def showHint(self, update:Update):
             table = pt.PrettyTable(['function', 'enter'])
             table.align['function'] = 'l'
-            table.align['input'] = 'l'
+            table.align['enter'] = 'l'
 
-            for func, enter in self.command_list:
+            data = [
+                ('start','/start'),
+                ('reset','/reset'),
+                ('language append','/option'),
+                ('language delete','/delete'),
+            ]
+
+            for func, enter in data:
                 table.add_row([func, enter])
 
             update.message.reply_text(f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
@@ -240,7 +247,7 @@ class CornerstoneChatbot:
 
         context.bot.send_message(
                 chat_id=self.user_id,
-                text = '초기화 되었습니다.\n재설정은 \start 를 입력해주세요.'
+                text = "초기화 되었습니다.\n재설정은 '/start' 를 입력해주세요."
         )
 
 
