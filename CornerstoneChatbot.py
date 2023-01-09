@@ -145,13 +145,13 @@ class CornerstoneChatbot:
                     mode = 1
                 )
 
-                # 긴급 재난 문자 전송
-                for i in range(0, len(message)):
-                    str_message = str(message[i])
-                    self.sendingBot.send_message(
-                        chat_id=self.user_id,
-                        text = str_message
-                    )
+            # 긴급 재난 문자 전송
+            for i in range(0, len(message)):
+                str_message = str(message[i])
+                self.sendingBot.send_message(
+                    chat_id=self.user_id,
+                    text = str_message
+                )
 
     def mySendMessage(self, update:Update, context:CallbackContext):
         print(self.language)
