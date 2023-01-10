@@ -1,45 +1,24 @@
 # Cornerstone Chatbot Log
 
+# 2023-01-10 작성
+ * 의문점
+    1. ChatbotDB의 con은 왜 생성자에서 connection을 호출하지 않는가?
+        - 현재는 PEx 클래스 생성자에서 ChatbotDB 객체 생성 후 connection()을 호출하는 데 의도가 무엇인지
 
-# 2023-01-07 01:46 작성
--         if(self.isAlready == False):
-            if(self.chatbot_db.visited_user(self.chatbot_db.con, self.user_id)):
-                self.isAlready = True
+    2. create_insert_table()은 왜 Simulation에서 호출 되는가? 이것 역시 ChatbotDB의 생성자에서 하는 게 옳지 않은가?
 
-                ... (feature/JunHyuk의 CornerstoneChatbot.py, line 128 ~ 130)
+    3. PEx 클래스의 self.db_langs와 같은 DB table을 생성하기 위한 리스트는 왜 PEx 클래스의 멤버 변수인가?
+        - DB의 table을 생성하기 위한 데이터이므로 ChatbotDB의 멤버 변수로 선언하면 create_insert_table()을 호출할 때
+          매개변수로 사용하지 않아도 되는데, 왜 굳이 PEx 클래스의 멤버 변수로 사용한 의도가 무엇인지
 
-- 의문 사항
-    1. 위 조건의 필요성은?
-        * self.isAlready가 True일 때만 sendMessageWithSim() 함수가 제대로 동작하기는 함.
-            그리고, self.chatbot_db.visited_user()를 통해 이미 DB에 user_id가 있으면 이미 데이터가 
-            있으므로 바로 message를 보낼 수 있게 하는 것 까지는 OK
-            But, 만약에 이미 DB에 user_id가 저장된 사용자가 /start를 하지 않고 있게 된다면?
-            self.isAlready == False가 맞음.
-            하지만, /start를 입력하지 않았기 때문에 self.user_id는 None 일거임
-            그렇다면, self.chatbot_db.visited_user() 인자로 넘어가는 self.user_id에서 에러가 발생할 것으로 예상됨
-            sendMessageWithSim()은 Cornerstone 객체가 만들어진 후 /start, /option 등과 같이 
-            ConversationHandler가 돌아가지 않아도 시뮬에서 호출 할 수 있음,
-            /start를 통해 ConversationHandler가 작동해야 self.user_id에 값이 들어가는데,
-            아무것도 입력하지 않았을 경우에도 sendMessageWithSim()은 호출될 수 있어서 
-            챗봇을 실행하고 가만히 있는 상태면 self.user_id가 없어서 문제가 될것으로 예상
+    4. CornerstoneChatbot(이하 Chatbot) 클래스의 멤버 면수 post_num 역시 DB와 더 관련 깊은 변수인데, 왜 Chatbot 클래스
+       멤버 변수로 선언했는가?
 
+ * 문제점
+    1. PEx, Chatbot, ChatbotDB 클래스 사이에 연관 관계가 필요 이상으로 복잡하게 설계되어 있음
+        - Chatbot 클래스 내부에서 멤버 변수로 ChatbotDB 객체를 생성하고 있음에도 PEx 객체에서도 생성하고 있음
+        - DB와 관련 깊은 데이터(변수)들이 PEx의 멤버 변수로 선언되어 있음
 
-* PEx 클래스 생성자에 bot.chatbot_db.con, bot.post_num등 외부에 선언 된 bot을 사용하는 게 맞는지,
- 맞다면 인자로 받아서 하는 게 더 안전할 거 같은데 어떻게 생각하는지
-
-* DB 파일이 message_db와 userID_db가 합쳐진게 Corner_db 인지,
-  맞다면 Line 48, 80에 bot.chatbot_db.message_con은 무엇을 의미하는지(message_con 변수를 생성하는 거?)
-  왜 생성자에서는 chatbot_db.con을 쓰는데 위는 message_con을 쓰는지,
-
-
-# 2023-01-07 16:33 작성
-1. 동작 설명
-    - /start 입력 시
-        - user_id가 DB에 존재하지 않으면 메뉴를 띄워주고, 지역과 언어를 선택 할 수 있게 제공
-        - user_id가 DB에 존재하면, DB에 저장 된 언어로 번역된 재난 문자 전송
-    - /option 입력 시
-        - 새로운 언어를 추가할 수 있는 메뉴제공
-        - 언어 선택 시, DB에 저장
-2. 앞으로 할 일
-    - 시뮬레이션 코드 정리(함수화, 주석 등으로 DB, Chatbot 개발자가 코드를 이해할 수 있게 하기 위함)
-    - DB, Chatbot, Simulation의 복잡한 연관성 정리
+ * 해결 방안
+    1. PEx 클래스는 Chatbot 객체만 생성하고, DB와 데이터 전달이 필요할 경우, Chatbot 객체의 멤버 변수로 선언된
+       ChatbotDB 객체를 참조해서 사용하는 방식으로 변경
