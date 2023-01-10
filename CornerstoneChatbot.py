@@ -63,7 +63,7 @@ class CornerstoneChatbot:
                 self.DELETE_BUTTON : [CallbackQueryHandler(self.deleteLangHandler)]
             },
 
-            fallbacks = [
+            fallbacks = [ 
                 CommandHandler(self.command_list[0][0], self.locationHandler),  # start
                 CommandHandler(self.command_list[1][0], self.languageHandler), # option
                 CommandHandler(self.command_list[2][0], self.deleteButtonHandler), # delete
@@ -269,39 +269,6 @@ class CornerstoneChatbot:
     '''
     def fallbackHandler(self, update:Update, context:CallbackContext):
         update.message.reply_text('이용해 주셔서 감사합니다.')
-
-    def deleteButtonHandler(self, update:Update, context:CallbackContext):
-        self.user_id = update.effective_chat.id
-
-        btnText_list = [
-            '영어', '일본어', '중국어'
-        ]
-
-        context.bot.send_message(
-            chat_id=self.user_id, 
-            text = '🌎삭제하실 언어를 선택해 주세요.', 
-            reply_markup = self.createButton(btnText_list)
-        )
-        
-        return self.DELETE_BUTTON
-
-    def deleteLangHandler(self, update:Update, context:CallbackContext):
-        self.user_id = update.effective_chat.id
-
-        if update.callback_query != None:
-            self.language = update.callback_query.data
-
-        self.chatbot_db.remove_data(
-            self.chatbot_db.user_con,
-            self.user_id,
-            self.language
-        )
-
-        context.bot.send_message(
-                chat_id=self.user_id,
-                text = self.language + '가 삭제되었습니다.🙂'
-        )
-        return self.LANGUAGE_BUTTON
 
     def deleteButtonHandler(self, update:Update, context:CallbackContext):
         self.user_id = update.effective_chat.id
