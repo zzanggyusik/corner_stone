@@ -22,3 +22,8 @@
  * 해결 방안
     1. PEx 클래스는 Chatbot 객체만 생성하고, DB와 데이터 전달이 필요할 경우, Chatbot 객체의 멤버 변수로 선언된
        ChatbotDB 객체를 참조해서 사용하는 방식으로 변경
+
+ * 추가적으로..
+    1. Chatbot의 멤버 변수 self.user_id, self.language, self.location을 DB의 멤버 변수로 변경
+        - 위 세 개의 멤벼 변수 모두 DB와 깊은 연관이 있는 변수이므로 DB에 있는 게 맞다고 판단 됨
+        - self.chatbot_db.user_id와 같은 방식으로 접근하도록 하여, DB의 함수 호출 시 인자 전달을 생략하도록 함
