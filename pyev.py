@@ -202,6 +202,7 @@ class PEx(BehaviorModelExecutor):
             while output_content.text == "":    #아직 번역이 되지 않았을 때
                 self.driver2.implicitly_wait(20)
             messages[l] = output_content.text   #번역 내용 리스트에 저장하기
+            
         print(messages[4])  #베트남어 테스트
         messages = messages[:4] #리스트에서 베트남어 지우기(아직 데이터 베이스에 넣을지 말지 모르기 때문에 다른 함수 변경사항 없음)
         return messages
