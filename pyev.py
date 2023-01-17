@@ -2,6 +2,8 @@ from pyevsim import BehaviorModelExecutor, SystemSimulator, Infinite
 import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import pyperclip
 from googletrans import Translator #pip install googletrans==4.0.0-rc1
 import sqlite3
 from sqlite3 import Error
@@ -21,7 +23,8 @@ class PEx(BehaviorModelExecutor):
         self.insert_state("Wait", Infinite)
         self.insert_state("Generate", 1)
         self.translator = Translator()                  #번역 객체 생성
-        self.driver = webdriver.Chrome("chromedriver")  #크롬 드라이버 객체 생성
+        self.driver1 = webdriver.Chrome("chromedriver")  #크롬 드라이버 객체 생성
+        self.driver2 = webdriver.Chrome("chromedriver")  #크롬 드라이버 객체 생성
         self.db_langs = ['kr_tb', 'eng_tb', 'ch_tb', 'jp_tb']
         self.db_label = ['info', 'keyword', 'region', 'area', 'number']
         self.db_types = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
@@ -55,8 +58,9 @@ class PEx(BehaviorModelExecutor):
                 print(local)
                 print(message)
                 if(message != ''):
-                    message, call, site = self.message_pre_processing(message)  #번역을 위한 메시지 전처리
-                    messages = self.message_translate(message, call, site)      #메시지 번역
+                    # message, call, site = self.message_pre_processing(message)  #번역을 위한 메시지 전처리
+                    # messages = self.message_translate(message, call, site)      #메시지 번역
+                    messages = self.translate(message)
                     self.message_db_save(messages, div, local, AREA, ID, index) #메시지와 정보 데이터 베이스에 저장
                     self.message_send(ID, index)                                #메시지 보내기
                     self.count += len(local)                                    #데이터 베이스의 데이터의 갯수 추가
@@ -72,21 +76,21 @@ class PEx(BehaviorModelExecutor):
     def message_Information(self):
         while(1):
             try:
-                self.driver.implicitly_wait(20)
-                self.driver.get("https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679")
-                self.driver.implicitly_wait(20)
-                self.boxs = self.driver.find_element(By.CLASS_NAME, 'boardList_boxWrap')
+                self.driver1.implicitly_wait(20)
+                self.driver1.get("https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679")
+                self.driver1.implicitly_wait(20)
+                self.boxs = self.driver1.find_element(By.CLASS_NAME, 'boardList_boxWrap')
                 break
             except:
                 continue
-        self.driver.implicitly_wait(20)
+        self.driver1.implicitly_wait(20)
         self.box = self.boxs.find_element(By.ID, 'disasterSms_tr')
         ID = []
         div = [] 
         AREA = []
 
         for i in range(10):
-            self.driver.implicitly_wait(20)
+            self.driver1.implicitly_wait(20)
             new_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_MD101_SN'%str(i))                                  #재난 문자의 번호 저장
             div_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_DSSTR_SE_NM'%str(i))                               #재난 문자의 종류 저장
             area_id = self.box.find_elements(By.CSS_SELECTOR, '#disasterSms_tr_%c_apiData1 > td:nth-child(4)'%str(i))    #재난 문자의 기관 저장
@@ -105,8 +109,8 @@ class PEx(BehaviorModelExecutor):
         while(1):
             try:
                 title = self.titles[index].find_element(By.TAG_NAME, 'a').click()    #링크 클릭하여 접속
-                self.driver.implicitly_wait(20)
-                location = self.driver.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text #재난 문자 발송 지역 저장
+                self.driver1.implicitly_wait(20)
+                location = self.driver1.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text #재난 문자 발송 지역 저장
                 location = location.split(',')
                 local = []
                 if(len(location) > 1):  #여러 지역에 발송되었을 때
@@ -116,99 +120,134 @@ class PEx(BehaviorModelExecutor):
                 else:   #한 지역에만 발송되었을 때
                     local.append(location[0].split()[0])
 
-                message = self.driver.find_element(By.CSS_SELECTOR, '#msg_cn').text #재난 문자 메시지 저장
-                self.driver.back()
+                message = self.driver1.find_element(By.CSS_SELECTOR, '#msg_cn').text #재난 문자 메시지 저장
+                self.driver1.back()
                 break
             except:
                 continue
 
         return message, local
 
-    def message_pre_processing(self, message):
-        if(message[0] == ' '): message = message[1:]
-        call = ""
-        site = ""
-        #번역을 위한 전 처리 과정
-        if(message.find('bit') != -1):  #사이트 추출
-            bit = message.find('bit.ly')
-            site = message[bit:message[bit:].find(' ')+bit]
-            message = message[:bit] + message[message[bit:].find(' ')+bit:]
-        if(message.find('ncvr') != -1):
-            ncvr = message.find('ncvr')
-            if(message[ncvr-1] == '('): #사이트가 괄호 안에 있다면 괄호를 포함하여 추출
-                site = message[ncvr-1:ncvr+16]
-                message = message[:ncvr-1] + message[ncvr+16:]
-            else:
-                site = message[ncvr:ncvr+15]
-                message = message[:ncvr] + message[ncvr+15:]
-        if(message.find('http') != -1):
-            http = message.find('http')
-            site = message[http:]
-            message = message[:http]
-        if(message.find('☎') != -1):   #전화 번호 추출
-            ca = message.find('☎')
-            if(message[ca-1] == '('):   #전화 번호가 괄호 안에 있다면 괄호를 포함하여 추출
-                call = message[ca-1:]
-                message = message[:ca-1]
-            else:
-                call = message[ca:]
-                message = message[:ca]
-        if(message.find('☏') != -1):
-            ca = message.find('☏')
-            if(message[ca-1] == '('):
-                call = message[ca-1:]
-                message = message[:ca-1]
-            else:
-                call = message[ca:]
-                message = message[:ca]
+    # def message_pre_processing(self, message):
+    #     if(message[0] == ' '): message = message[1:]
+    #     call = ""
+    #     site = ""
+    #     #번역을 위한 전 처리 과정
+    #     if(message.find('bit') != -1):  #사이트 추출
+    #         bit = message.find('bit.ly')
+    #         site = message[bit:message[bit:].find(' ')+bit]
+    #         message = message[:bit] + message[message[bit:].find(' ')+bit:]
+    #     if(message.find('ncvr') != -1):
+    #         ncvr = message.find('ncvr')
+    #         if(message[ncvr-1] == '('): #사이트가 괄호 안에 있다면 괄호를 포함하여 추출
+    #             site = message[ncvr-1:ncvr+16]
+    #             message = message[:ncvr-1] + message[ncvr+16:]
+    #         else:
+    #             site = message[ncvr:ncvr+15]
+    #             message = message[:ncvr] + message[ncvr+15:]
+    #     if(message.find('http') != -1):
+    #         http = message.find('http')
+    #         site = message[http:]
+    #         message = message[:http]
+    #     if(message.find('☎') != -1):   #전화 번호 추출
+    #         ca = message.find('☎')
+    #         if(message[ca-1] == '('):   #전화 번호가 괄호 안에 있다면 괄호를 포함하여 추출
+    #             call = message[ca-1:]
+    #             message = message[:ca-1]
+    #         else:
+    #             call = message[ca:]
+    #             message = message[:ca]
+    #     if(message.find('☏') != -1):
+    #         ca = message.find('☏')
+    #         if(message[ca-1] == '('):
+    #             call = message[ca-1:]
+    #             message = message[:ca-1]
+    #         else:
+    #             call = message[ca:]
+    #             message = message[:ca]
 
-        message = '코로나 바이러스 '.join(message.split('코로나')) #코로나라는 문자열이 있을 때 코로나를 코로나 바이러스라는 문자열로 변경
-        message = message.replace('▲', '\n').replace('▶', '\n').replace('△', '\n')  #해당 이모티콘 제거
-        message = '\n'.join(message.split('\n\n'))
-        return message, call, site
+    #     message = '코로나 바이러스 '.join(message.split('코로나')) #코로나라는 문자열이 있을 때 코로나를 코로나 바이러스라는 문자열로 변경
+    #     message = message.replace('▲', '\n').replace('▶', '\n').replace('△', '\n')  #해당 이모티콘 제거
+    #     message = '\n'.join(message.split('\n\n'))
+    #     return message, call, site
 
-    def message_translate(self, message, call, site):
-        messages = [message, "", "", ""]
-        langs = ['ko', 'en', 'zh-cn', 'ja']
+    def clipboard_input(self, user_input="", default_delay=1):
+        temp_copy = pyperclip.paste()
+        pyperclip.copy(user_input)  #번역할 내용 클립보드에 저장
+        webdriver.ActionChains(self.driver2).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()   #ctrl+v 명령어 수행
+        pyperclip.copy(temp_copy)   #클립보드 비우기
+        return
 
-        for i in message.split('\n'):
-            if(i == '' or i == ' ' or i == '\n'): continue  #문자열이 비어 있으면 continue
-            if(i[0] == ' '): i = i[1:]
-            if(i.find(')') - i.find('(') > 4):  #괄호 안에 문자열이 있을 경우
-                s = i.find('(') #괄호 안 문자열을 따로 번역하기 위한 전처리 과정
-                e = i.find(')')
-                for l in range(1, len(langs)):
-                    if(s > 0):  #괄호가 맨 앞에 있지 않을 경우
-                        messages[l] += self.translator.translate(i[:s], dest = langs[l], src = 'ko').text + '(' #괄호 앞에 있는 문자열을 번역 및 저장
-                    else: messages[l] += '(' #괄호가 맨 앞에 있을 경우
+    def translate(self, content=""):
+        messages = [content, "", "", "", ""]
+        langs = ['ko', 'en', 'zh-CN', 'ja', 'vi']
+        for l in range(1, len(langs)):
+            src = langs[0]
+            dest = langs[l]
+            url = "https://papago.naver.com/?sk=%s&tk=%s"%(src, dest)
+            if(dest in "krja"): #한국어랑 일본어는 높임말이 있어 예외처리
+                url += "&hn=1"
+            self.driver2.get(url)
+            self.driver2.implicitly_wait(20)
 
-                    messages[l] += self.translator.translate(i[s+1:e], dest = langs[l], src = 'ko').text + ')'  #괄호 안에 있는 문자열을 번역 및 저장
+            input_content = self.driver2.find_element(By.XPATH, '//*[@id="txtSource"]')     #번역할 내용을 넣는 공간
+            process_Btn = self.driver2.find_element(By.XPATH, '//*[@id="btnTranslate"]')    #번역하기 버튼
+            output_content = self.driver2.find_element(By.XPATH, '//*[@id="txtTarget"]')    #번역된 내용이 있는 공간
 
-                    if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
-                        messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
-                    else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
-            elif(i.find(')') != -1 and i.find('(') != -1): #괄호안에 문자열이 있으나 짧을 경우
-                s = i.find('(')
-                e = i.find(')')
-                for l in range(1, len(langs)):
-                    messages[l] += self.translator.translate(i[:e+1], dest = langs[l], src = 'ko').text  #괄호 앞과 괄호 안에 있는 문자열을 같이 번역 및 저장
-
-                    if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
-                        messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
-                    else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
-            else:   #괄호 안에 문자열이 없을 경우 == 괄호가 없을 경우
-                for l in range(1, len(langs)):
-                    messages[l] += self.translator.translate(i, dest = langs[l], src = 'ko').text + '. '
-
-        #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
-        if(site != ""):
-            for l in range(0, len(langs)):  #추출했던 사이트 이어 붙이기
-                messages[l] += site + ' '
-        if(call != ""):
-            for l in range(0, len(langs)):  #추출했던 전화 번호 이어 붙이기
-                messages[l] += call + ' '
-
+            input_content.clear()   #공간 비우기
+            input_content.click()   #공간 클릭
+            self.clipboard_input(content)   #공간에 번역할 내용 복사하기
+            process_Btn.click()             #번역하기 버튼 클릭
+            self.driver2.implicitly_wait(20)    #번역 대기 시간
+            while output_content.text == "":    #아직 번역이 되지 않았을 때
+                self.driver2.implicitly_wait(20)
+            messages[l] = output_content.text   #번역 내용 리스트에 저장하기
+        print(messages[4])  #베트남어 테스트
+        messages = messages[:4] #리스트에서 베트남어 지우기(아직 데이터 베이스에 넣을지 말지 모르기 때문에 다른 함수 변경사항 없음)
         return messages
+
+    # def message_translate(self, message, call, site):
+    #     messages = [message, "", "", ""]
+    #     langs = ['ko', 'en', 'zh-cn', 'ja']
+
+    #     for i in message.split('\n'):
+    #         if(i == '' or i == ' ' or i == '\n'): continue  #문자열이 비어 있으면 continue
+    #         if(i[0] == ' '): i = i[1:]
+    #         if(i.find(')') - i.find('(') > 4):  #괄호 안에 문자열이 있을 경우
+    #             s = i.find('(') #괄호 안 문자열을 따로 번역하기 위한 전처리 과정
+    #             e = i.find(')')
+    #             for l in range(1, len(langs)):
+    #                 if(s > 0):  #괄호가 맨 앞에 있지 않을 경우
+    #                     messages[l] += self.translator.translate(i[:s], dest = langs[l], src = 'ko').text + '(' #괄호 앞에 있는 문자열을 번역 및 저장
+    #                 else: messages[l] += '(' #괄호가 맨 앞에 있을 경우
+
+    #                 messages[l] += self.translator.translate(i[s+1:e], dest = langs[l], src = 'ko').text + ')'  #괄호 안에 있는 문자열을 번역 및 저장
+
+    #                 if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
+    #                     messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
+    #                 else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
+    #         elif(i.find(')') != -1 and i.find('(') != -1): #괄호안에 문자열이 있으나 짧을 경우
+    #             s = i.find('(')
+    #             e = i.find(')')
+    #             for l in range(1, len(langs)):
+    #                 messages[l] += self.translator.translate(i[:e+1], dest = langs[l], src = 'ko').text  #괄호 앞과 괄호 안에 있는 문자열을 같이 번역 및 저장
+
+    #                 if(len(i) > e+1 and i[e+1:] != ' ' and i[e+1:] != '\n'):    #괄호가 맨 뒤에 있지 않을 경우
+    #                     messages[l] += self.translator.translate(i[e+1:], dest = langs[l], src = 'ko').text + '. '  #괄호 뒤에 있는 문자열을 번역 및 저장
+    #                 else: messages[l] += '. ' #괄호가 맨 뒤에 있을 경우
+    #         else:   #괄호 안에 문자열이 없을 경우 == 괄호가 없을 경우
+    #             for l in range(1, len(langs)):
+    #                 messages[l] += self.translator.translate(i, dest = langs[l], src = 'ko').text + '. '
+
+    #     #한국어 ko 영어 en 중국어(간체) zh-cn 중국어(번체) zh-tw 일본어 ja
+    #     if(site != ""):
+    #         for l in range(0, len(langs)):  #추출했던 사이트 이어 붙이기
+    #             messages[l] += site + ' '
+    #     if(call != ""):
+    #         for l in range(0, len(langs)):  #추출했던 전화 번호 이어 붙이기
+    #             messages[l] += call + ' '
+
+    #     return messages
 
     def message_db_save(self, messages, div, local, AREA, ID, index):
         langs = ['ko', 'en', 'zh-cn', 'ja']
