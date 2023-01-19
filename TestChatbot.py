@@ -1,6 +1,7 @@
 from telegram import *
 from telegram.ext import *
 from ChatbotDB import *
+from pyev import *
 
 class ChatbotConstants:
     # Conversation State
@@ -121,16 +122,29 @@ class TestChatbot:
 
         return InlineKeyboardMarkup(buttons)
 
-    def sendMessageFromSim(self):
+    # 이미 세팅이 끝난 유저가 사이트에서 새로 갱신된 문자를 보내게끔
+    def sendMessageFromSim(self, region):
         if self.chatbot_db.visited_user():
-            messages = self.chatbot_db.search_data(1)
-            userList = self.chatbot_db.get_user_list()
-            for u in userList:
-                for m in messages:
-                    self.updater.bot.send_message(
-                        chat_id = self.chatbot_db.user_id,
-                        text = m
-                    )
+            ID = 0
+            LANG = 1
+    
+            userlist = self.chatbot_db.get_user_list(region) # 충청북도 유저 리스트
+            message = self.chatbot_db.search_data(region) # 충청북도 재난 문자(번역 x)
+
+            trans_dict = {}
+            for u in userlist:
+                if u[LANG] not in trans_dict:
+                    # TODO : 이미 번역된 메시지가 없을 경우, 메시지를 먼저 번역해서 임시 딕셔너리에 저장
+                    trans_dict.update(u[LANG], PEx.TransMessage(message, 'ko', u[LANG]))
+
+                self.updater.bot.send_message(
+                    chat_id = u[ID],
+                    text = trans_dict[u[LANG]]
+                )
+
+                    
+
+
 
 ##############################################################
     def cb_start(self, update: Update, context: CallbackContext):
@@ -184,6 +198,9 @@ class TestChatbot:
 
         return ChatbotConstants.LANGUAGE_BUTTON
 
+    def tmp(self):
+        pass
+
     def cb_completeSetting(self, update: Update, context: CallbackContext):
         self.chatbot_db.user_id = update.effective_user.id
 
@@ -199,6 +216,12 @@ class TestChatbot:
             text = text
         )
 
+        # TODO : 이제 막 세팅이 끝난 유저, DB에 저장된 가장 최근의 메시지를 보내기
+        message = self.chatbot_db.search_data(self.chatbot_db.user_region)
+        update.callback_query.message.reply_text(
+            text = message
+        )
+
         return ChatbotConstants.END
 
     def cb_cancel(self, update: Update, context: CallbackContext):
@@ -212,12 +235,12 @@ class TestChatbot:
         update.message.reply_text('< Menu >\n'+"'/start' | "+self.text_list[ChatbotConstants.START]+"\n '/set'  | "+self.text_list[ChatbotConstants.SET_INFO]+"\n'/help' | "+self.text_list[ChatbotConstants.HINT]+"\n")
 
 ##############################################################
-def main() -> None:
-    bot = TestChatbot()
-    bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
-    bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
-    bot.updater.start_polling()
-    bot.updater.idle()
+# def main() -> None:
+#     bot = TestChatbot()
+#     bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
+#     bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
+#     bot.updater.start_polling()
+#     bot.updater.idle()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
