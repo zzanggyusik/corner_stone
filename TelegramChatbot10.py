@@ -46,7 +46,7 @@ class CornerstoneChatbot:
                 fallbacks = [
                     #입력: start -> 지역 선택(처음만)
                     CommandHandler('start', self.locationHandler),  # start
-                    CommandHandler('reset',self.resetHandler),
+                    CommandHandler('set',self.resetHandler),
                     #CommandHandler('change', self.languageHandler),  # mode 변경 필요
                 ],
 
@@ -54,11 +54,22 @@ class CornerstoneChatbot:
                     ConversationHandler.END:ConversationHandler.END
                 }
             )
+        #===#
+        self.text_list = [
+            "Hello, I'm a disaster text translation bot.",
+            "Please select the area you live in.",
+            "Please select a language to translate.",
+            "The setting is complete.",
+            "Disaster Text Output",
+            "Language and Region Reset",
+            "How to use"
+            ]
+
     #=============== Method ==================#
     #시작, 메시지 출력
     def introduction(self, update:Update):
-        update.message.reply_text('안녕하세요, 긴급 재난 문자 번역을 수행하는 코너스톤 챗봇입니다.🙂')
-        update.message.reply_text("'/start' : start\n'/set' : reset\n'/help' : menu")
+        update.message.reply_text(self.text_list[0])
+        update.message.reply_text('< Menu >\n'+"-"*37+"\n'/start' | "+self.text_list[4]+"\n '/set'  | "+self.text_list[5]+"\n'/help' | "+self.text_list[6]+"\n"+"-"*37)
 
     #메시지 보내기(시뮬, db연동)
     def sendMessageWithSim(self):
@@ -132,27 +143,27 @@ class CornerstoneChatbot:
         
         #버튼 메뉴
         btnText_list = [
-            [InlineKeyboardButton("Seoul Metropolitan City", callback_data = 'seo')],
-            [InlineKeyboardButton("Busan Metropolitan City", callback_data = 'bu')],
-            [InlineKeyboardButton("Daegu Metropolitan City", callback_data = 'da')],
-            [InlineKeyboardButton("Incheon Metropolitan City", callback_data = 'in')],
-            [InlineKeyboardButton("Gwangju Metropolitan City", callback_data = 'gw')],
-            [InlineKeyboardButton("Daejeon Metropolitan City", callback_data = 'de')],
-            [InlineKeyboardButton("Ulsan Metropolitan City", callback_data = 'ul')],
-            [InlineKeyboardButton("Sejong City", callback_data = 'se')],
-            [InlineKeyboardButton("Gyeonggi Province", callback_data = 'gu')],
-            [InlineKeyboardButton("Gangwon-do", callback_data = 'ga')],
-            [InlineKeyboardButton("Chungcheongbuk-do", callback_data = 'cb')],
-            [InlineKeyboardButton("Chungcheongnam-do", callback_data = 'cn')],
-            [InlineKeyboardButton("Jeollabuk-do", callback_data = 'jb')],
-            [InlineKeyboardButton("Jeollanam-do", callback_data = 'jn')],
-            [InlineKeyboardButton("Gyeongsangbuk-do Province", callback_data = 'gb')],
-            [InlineKeyboardButton("Gyeongsangnam-do Province", callback_data = 'gn')],
-            [InlineKeyboardButton("Jeju Special Self-Governing Province", callback_data = 'je')],
+            [InlineKeyboardButton("Seoul Metropolitan City", callback_data = '서울특별시')],
+            [InlineKeyboardButton("Busan Metropolitan City", callback_data = '부산광역시')],
+            [InlineKeyboardButton("Daegu Metropolitan City", callback_data = '대구광역시')],
+            [InlineKeyboardButton("Incheon Metropolitan City", callback_data = '인천광역시')],
+            [InlineKeyboardButton("Gwangju Metropolitan City", callback_data = '광주광역시')],
+            [InlineKeyboardButton("Daejeon Metropolitan City", callback_data = '대전광역시')],
+            [InlineKeyboardButton("Ulsan Metropolitan City", callback_data = '울산광역시')],
+            [InlineKeyboardButton("Sejong City", callback_data = '세종특별자치시')],
+            [InlineKeyboardButton("Gyeonggi Province", callback_data = '경기도')],
+            [InlineKeyboardButton("Gangwon-do", callback_data = '강원도')],
+            [InlineKeyboardButton("Chungcheongbuk-do", callback_data = '충청북도')],
+            [InlineKeyboardButton("Chungcheongnam-do", callback_data = '충청남도')],
+            [InlineKeyboardButton("Jeollabuk-do", callback_data = '전라북도')],
+            [InlineKeyboardButton("Jeollanam-do", callback_data = '전라남도')],
+            [InlineKeyboardButton("Gyeongsangbuk-do Province", callback_data = '경상북도')],
+            [InlineKeyboardButton("Gyeongsangnam-do Province", callback_data = '경상남도')],
+            [InlineKeyboardButton("Jeju Special Self-Governing Province", callback_data = '제주특별자치도')],
 
         ]
         reply_markup = InlineKeyboardMarkup(btnText_list)
-        update.message.reply_text('🧭거주 지역 선택',reply_markup = reply_markup)
+        update.message.reply_text(self.text_list[1],reply_markup = reply_markup)
 
         print(self.location)
 
@@ -176,8 +187,8 @@ class CornerstoneChatbot:
         btnText_list = [
             [InlineKeyboardButton("English", callback_data = 'en'),
             InlineKeyboardButton("にほんご", callback_data = 'ja')],
-            [InlineKeyboardButton("中文", callback_data = 'zh-chs'),
-            InlineKeyboardButton("漢語", callback_data = 'zh-cht')],
+            [InlineKeyboardButton("中文", callback_data = 'zh-CN'),
+            InlineKeyboardButton("漢語", callback_data = 'zh-TW')],
             [InlineKeyboardButton("español", callback_data = 'es'),
             InlineKeyboardButton("français", callback_data = 'fr')],
             [InlineKeyboardButton("das Deutsche", callback_data = 'de'),
@@ -190,7 +201,7 @@ class CornerstoneChatbot:
             InlineKeyboardButton("बहसा इंडोनेशिया", callback_data = 'hi')],
         ]
         reply_markup = InlineKeyboardMarkup(btnText_list)
-        update.callback_query.message.reply_text('🧭사용 언어 선택', reply_markup = reply_markup)
+        update.callback_query.message.reply_text(self.text_list[2], reply_markup = reply_markup)
 
         print(self.language)
 
