@@ -10,7 +10,7 @@
 
 - VScode 설치
 - Github 아이디 필요
-- Sublinemerge 설치(위치 확인 및 오류 해결을 위함)
+- Sublinemerge 설치(위치 확인 및 오류 해결을 위함) // oh-my-zsh (terminal) 사용 또한 
 
 ### Github
 
