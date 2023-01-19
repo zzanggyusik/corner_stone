@@ -134,7 +134,6 @@ class ChatbotDB:
     def get_user_list(self, region):
         cursor_db = self.con.cursor()
         cursor_db.execute("select *from user_tb where region=?", (region,))
-        cursor_db.execute('SELECT * FROM user_tb ORDER BY language ASC')
         user_data = cursor_db.fetchall()
         self.con.commit()
         
