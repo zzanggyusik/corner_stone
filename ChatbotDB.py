@@ -1,21 +1,27 @@
 from sqlite3 import Error
 import sqlite3
+from pyev import *
 
 class ChatbotDB:
     def __init__(self) -> None:
-        self.con = ''
-        self.user_table = ['user_tb']
-        self.lavel = ['id', 'language', 'region']
-        self.types = ['INT', 'TEXT', 'TEXT']
-        self.langs = ['영어', '중국어', '일본어']
-        self.count_ = 0
+        self.user_id = ''
+        self.user_region = ''
+        self.user_language_code = ''
+        self.con = self.connection()
 
-    def dbHandler(self, id, language, region):
-        user_info = []
-        user_info.extend([id, language, region])
-        if(language in self.langs):
-            self.create_insert_table(self.con, self.user_table, self.lavel, self.types, 0, [user_info[0], user_info[1], user_info[2]])
-            self.update_data(id)
+        self.user_table = ['user_tb']
+        self.user_cols = ['id', 'language', 'region']
+        self.user_types = ['INT', 'TEXT', 'TEXT']
+        
+        self.message_table = ['kr_tb']
+        self.message_cols = ['info', 'keyword', 'region', 'area', 'number', 'date']
+        self.message_types = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
+
+        self.langs = [None, '영어', '중국어', '일본어']
+        self.langs_code = ['', 'en', 'zh-CN', 'ja']
+        self.create_table()
+        self.post_num = self.post_number()
+        self.count_ = 0
 
     def connection(self):
             try: # 데이터베이스 연결 (파일이 없으면 만들고 있으면 연결)
@@ -25,87 +31,83 @@ class ChatbotDB:
             except Error: # 에러 출력
                 print(Error)
 
-    def create_insert_table(self, con, tb_name, tb_cols, tb_type, mode, value=None):
-        if(self.count_ == 0):
-            self.count_ = 1
-            self.create_insert_table(con, self.user_table, self.lavel, self.types, 0)
-            
-        cursor_db = con.cursor()
-        tb_table = []
-        for i in range(len(tb_cols)):
-            tb_table.append(tb_cols[i] + " " +  tb_type[i]) 
+    def create_table(self): #테이블 생성
+        tables = [self.user_table, self.message_table]
+        cols = [self.user_cols, self.message_cols]
+        types = [self.user_types, self.message_types]
 
-        table = ",".join(tb_table)
-        for i in tb_name:
-            cursor_db.execute(f"CREATE TABLE IF NOT EXISTS {i}({table})")
-        print(f"[DB] - create {tb_name}")
+        cursor_db = self.con.cursor()
+        for num in range(len(tables)):
+            tb_table = []
+            for i in range(len(cols[num])):
+                tb_table.append(cols[num][i] + " " +  types[num][i]) 
 
-        if(value == None):
-            return
-        col_name = ",".join(tb_cols)
-        if(mode == 0):
-            if(self.check_data(con, value[0], value[1])):
-                values = ','.join(["'" + str(i) + "'" for i in value])
-                cursor_db.execute(f'INSERT INTO {tb_name[0]}({col_name}) VALUES({values})')
-        elif(mode == 1):
-            value[1] = "\'\'".join(value[1].split("\'"))
-            value[1] = "\"\"".join(value[1].split("\""))
-            values = ','.join(["\'" + str(i) + "\'" for i in value[1:]])
-            cursor_db.execute(f'INSERT INTO {tb_name[value[0]]}({col_name}) VALUES({values})')
-        con.commit()
+            table = ",".join(tb_table)
+            for i in tables[num]:
+                cursor_db.execute(f"CREATE TABLE IF NOT EXISTS {i}({table})")
+            print(f"[DB] - create {tables[num]}")
+        self.con.commit()
+
+    def insert_table(self, mode=0, value=None): #테이블에 데이터 추가
+        cursor_db = self.con.cursor()
+        if(mode == 0): #챗봇 모드
+            col_name = ",".join(self.user_cols)
+            if(self.check_data()):
+                pass
+            else:
+                self.remove_data()
+            values = ','.join(["'" + str(i) + "'" for i in [self.user_id, self.user_language_code, self.user_region]])
+            cursor_db.execute(f'INSERT INTO {self.user_table[0]}({col_name}) VALUES({values})')
+        elif(mode == 1): #시뮬 모드
+            col_name = ",".join(self.message_cols)
+            value[0] = "\'\'".join(value[0].split("\'"))
+            value[0] = "\"\"".join(value[0].split("\""))
+            values = ','.join(["\'" + str(i) + "\'" for i in value])
+            cursor_db.execute(f'INSERT INTO {self.message_table[0]}({col_name}) VALUES({values})')
         print("[DB] - insert")
+        self.con.commit()
 
-    def clear_table(self, con):
-        cursor_db = con.cursor()
+    def clear_table(self):
+        cursor_db = self.con.cursor()
         cursor_db.execute("DELETE FROM user_tb")
-        con.commit()
+        self.con.commit()
         print("[DB] - clear")
 
-    def delete_table(self, con, tb_name):
-        cursor_db = con.cursor()
+    def delete_table(self, tb_name):
+        cursor_db = self.con.cursor()
         for lang in tb_name:
             cursor_db.execute("DELETE FROM %s_tb"%lang)
-        con.commit()
+        self.con.commit()
 
-    def disconnetion(self, con):
-        con.close()
+    def disconnetion(self):
+        self.con.close()
         print("[DB] - disconnet")
 
-    def search_data(self, con, language, region, post_num, mode):
+    def search_data(self, mode) -> list:
         serarch_data = []
-        cursor_db = con.cursor()
+        cursor_db = self.con.cursor()
         str_data = []
-        if language == '영어':
-            cursor_db.execute("SELECT *FROM eng_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
-            str_data = cursor_db.fetchall()
-            if len(str_data) == 0:
-                serarch_data.append("Sorry, the latest disaster safety text does not exist.")
-        elif language == '중국어':
-            cursor_db.execute("SELECT *FROM ch_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
-            str_data = cursor_db.fetchall()
-            if len(str_data) == 0:
-                serarch_data.append("对不起，最近的灾难安全短信不存在。")
-        elif language == '일본어':
-            cursor_db.execute("SELECT *FROM jp_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
-            str_data = cursor_db.fetchall()
-            if len(str_data) == 0:
-                serarch_data.append("申し訳ありませんが、最近災害安全メールが存在しません。")
-        else:
-            serarch_data.append("Sorry, This language is not serviced.")
+        cursor_db.execute("SELECT *FROM kr_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (self.user_region,))
+        str_data = cursor_db.fetchall()
 
         if(len(str_data) != 0):
             if(mode == 0):
-                serarch_data.append(str_data[len(str_data)-1][0])
+                message = PEx.TransMessage([str_data[0][0]], 'ko', self.user_language_code)
+                serarch_data.append(message[0])
             elif(mode == 1):
                 for i in range(0, len(str_data)):
-                    if(str_data[i][4] > post_num):
-                        serarch_data.append(str_data[i][0])
+                    if(str_data[i][4] > self.post_num):
+                        message = PEx.TransMessage([str_data[i][0]], 'ko', self.user_language_code)
+                        serarch_data.append(message[0])
+        else:
+            serarch_data.append("Sorry, the latest disaster safety text does not exist.")
+
         print("[DB] - send complete")
         return serarch_data
 
-    def visited_user(self, con, id):
-        cursor_db = con.cursor()
-        cursor_db.execute("SELECT *FROM user_tb WHERE id=?", (id,))
+    def visited_user(self):
+        cursor_db = self.con.cursor()
+        cursor_db.execute("SELECT *FROM user_tb WHERE id=?", (self.user_id,))
         data = cursor_db.fetchall()
         if len(data) != 0:
             print("[DB] - ID exist")
@@ -114,21 +116,21 @@ class ChatbotDB:
             print("[DB] - ID not exist")
             return False
 
-    def update_data(self, id):
+    def update_data(self):
         cusor_db = self.con.cursor()
-        cusor_db.execute("SELECT *FROM user_tb WHERE id=?", (id,))
+        cusor_db.execute("SELECT *FROM user_tb WHERE id=?", (self.user_id,))
         find_data = cusor_db.fetchone()
         region_data = find_data[2]
         cusor_db.execute("update user_tb set region=? where region=?", (region_data, '',))
         self.con.commit()
         print(f"[DB] - update {id} -> {region_data}")
 
-    def check_data(self, con, id, language):
-        cursor_db = con.cursor()
-        cursor_db.execute("SELECT *FROM user_tb WHERE id=? AND language=?", (id,language,))
+    def check_data(self):
+        cursor_db = self.con.cursor()
+        cursor_db.execute("SELECT *FROM user_tb WHERE id=?", (self.user_id,))
         check_data = cursor_db.fetchall()
         print(check_data)
-        con.commit()
+        self.con.commit()
         if len(check_data) != 0:
             print("[DB] - check_data -> True")
             return False
@@ -136,52 +138,51 @@ class ChatbotDB:
             print("[DB] - check_data -> False")
             return True
 
-    def user_language(self, con, id):
-        use_language = []
-        cursor_db = con.cursor()
-        cursor_db.execute("select *from user_tb where id=?", (id,))
-        user_data = cursor_db.fetchall()
-        for i in range(0, len(user_data)):
-            use_language.append(user_data[i][1])
-        con.commit()
-        print(f"[DB] - {id} -> {use_language}")
-        return use_language
-    
-    def user_location(self, con, id):
-        use_location = ''
-        cursor_db = con.cursor()
-        cursor_db.execute("select *from user_tb where id=?", (id,))
+    def get_user_language(self):
+        user_language = ''
+        cursor_db = self.con.cursor()
+        cursor_db.execute("select *from user_tb where id=?", (self.user_id,))
         user_data = cursor_db.fetchall()
         if(len(user_data) != 0):
-            use_location = user_data[0][2]
-        con.commit()
-        print(f"[DB] - {id} -> {use_location}")
-        return use_location
+            user_language = user_data[0][1]
+        self.con.commit()
+        print(f"[DB] - {id} -> {user_language}")
+        self.user_language_code = user_language
+    
+    def get_user_location(self):
+        user_location = ''
+        cursor_db = self.con.cursor()
+        cursor_db.execute("select *from user_tb where id=?", (self.user_id,))
+        user_data = cursor_db.fetchall()
+        if(len(user_data) != 0):
+            user_location = user_data[0][2]
+        self.con.commit()
+        print(f"[DB] - {id} -> {user_location}")
+        self.user_region = user_location
 
-    def post_number(self, con): #db에 저장된 재난 문자 중 가장 최근 문자의 번호를 반환
-        cursor_db = con.cursor()
+    def post_number(self): #db에 저장된 재난 문자 중 가장 최근 문자의 번호를 반환
+        cursor_db = self.con.cursor()
         cursor_db.execute("SELECT *FROM kr_tb ORDER BY ROWID DESC LIMIT 1")
         first_number = cursor_db.fetchall()
         if(len(first_number) == 0):   #만약 저장된 데이터가 없다면 '-1'을 반환
             return '-1'
         return first_number[0][4]
 
-    def remove_old_data(self, con):
-        cursor_db = con.cursor()
+    def remove_old_data(self):
+        cursor_db = self.con.cursor()
         cursor_db.execute("SELECT count(*) from kr_tb")
         count = cursor_db.fetchone()
         count = count[0]
         
         if count >= 150:
-            for i in range(4):
-                command = "DELETE FROM %s_tb where number<%s"%(self.langs[i], str(int(self.post_num)-140))
-                cursor_db.execute(command)
+            command = "DELETE FROM kr_tb where number<%s"%(str(int(self.post_num)-140))
+            cursor_db.execute(command)
             count -= 10
-        con.commit()
+        self.con.commit()
         return count
 
-    def remove_data(self, con, id, language):
-        cursor_db = con.cursor()
-        cursor_db.execute("delete FROM user_tb WHERE id = ? AND language = ?", (id, language,))
-        con.commit()
-        print(f"[DB] - remove {id}:{language}")
+    def remove_data(self):
+        cursor_db = self.con.cursor()
+        cursor_db.execute("delete FROM user_tb WHERE id = ?", (self.user_id,))
+        self.con.commit()
+        print(f"[DB] - remove {self.user_id}")
