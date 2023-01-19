@@ -7,7 +7,6 @@ import pyperclip
 from telegram import *
 from telegram.ext import *
 from TestChatbot import *
-from googletrans import Translator #pip install googletrans==4.0.0-rc1
 import random
 import time
 
@@ -45,7 +44,7 @@ class PEx(BehaviorModelExecutor):
                 print(message)
                 if(message != ''):
                     self.message_db_save(message, div, local, AREA, ID, index)  #메시지와 정보 데이터 베이스에 저장
-                    self.message_send(ID, index)                                #메시지 보내기
+                    self.message_send(ID, local, index)                         #메시지 보내기
                     self.count += len(local)                                    #데이터 베이스의 데이터의 갯수 추가
                     index -= 1
                     if(self.count >= 150):
@@ -53,7 +52,7 @@ class PEx(BehaviorModelExecutor):
                 else: 
                     continue    #메시지를 읽어 오는데 실패했으므로 continue
                 print()
-        elif(random.randint(0, 100) % 33 == 0):
+        elif(random.randint(0, 100) % 15 == 0):
             self.randmessage()  #랜덤 db 데이터 삽입 및 텔레그램 메시지 출력
 
     def message_Information(self):
@@ -118,45 +117,34 @@ class PEx(BehaviorModelExecutor):
         pyperclip.copy(temp_copy)   #클립보드 비우기
         return
     
-    def TransMessage(messages, src='ko', dest='en'):
-        output_messages = []
-        for message in messages:
-            driver = webdriver.Chrome("chromedriver")
-            while(1):
-                try:
-                    url = "https://papago.naver.com/?sk=%s&tk=%s"%(src, dest)
-                    if(dest in "krja"): #한국어랑 일본어는 높임말이 있어 예외처리
-                        url += "&hn=1"
-                    driver.get(url)
-                    driver.implicitly_wait(20)
+    def TransMessage(message, src='ko', dest='en'):
+        driver = webdriver.Chrome("chromedriver")
+        while(1):
+            try:
+                url = "https://papago.naver.com/?sk=%s&tk=%s"%(src, dest)
+                if(dest in "krja"): #한국어랑 일본어는 높임말이 있어 예외처리
+                    url += "&hn=1"
+                driver.get(url)
+                driver.implicitly_wait(20)
 
-                    input_content = driver.find_element(By.XPATH, '//*[@id="txtSource"]')     #번역할 내용을 넣는 공간
-                    process_Btn = driver.find_element(By.XPATH, '//*[@id="btnTranslate"]')    #번역하기 버튼
-                    output_content = driver.find_element(By.XPATH, '//*[@id="txtTarget"]')    #번역된 내용이 있는 공간
+                input_content = driver.find_element(By.XPATH, '//*[@id="txtSource"]')     #번역할 내용을 넣는 공간
+                process_Btn = driver.find_element(By.XPATH, '//*[@id="btnTranslate"]')    #번역하기 버튼
+                output_content = driver.find_element(By.XPATH, '//*[@id="txtTarget"]')    #번역된 내용이 있는 공간
 
-                    input_content.clear()   #공간 비우기
+                input_content.clear()   #공간 비우기
+                driver.implicitly_wait(20)
+                input_content.click()   #공간 클릭
+                PEx.clipboard_input(driver, message)   #공간에 번역할 내용 복사하기
+                process_Btn.click()             #번역하기 버튼 클릭
+                driver.implicitly_wait(20)    #번역 대기 시간
+                while output_content.text == "":    #아직 번역이 되지 않았을 때
                     driver.implicitly_wait(20)
-                    input_content.click()   #공간 클릭
-                    PEx.clipboard_input(driver, message)   #공간에 번역할 내용 복사하기
-                    process_Btn.click()             #번역하기 버튼 클릭
-                    driver.implicitly_wait(20)    #번역 대기 시간
-                    while output_content.text == "":    #아직 번역이 되지 않았을 때
-                        driver.implicitly_wait(20)
-                    output_messages.append(output_content.text)   #번역 내용 리스트에 저장하기
-                    print(output_content.text)
-                    break
-                except:
-                    continue
+                print(output_content.text)
+                break
+            except:
+                continue
         
-        return output_messages
-
-    def Ggtrans(messages, src='ko', dest='en'):
-        trans = Translator()
-        output_messages = []
-        for message in messages:
-            output_messages.append(trans.translate(message, src=src, dest=dest).text)
-
-        return output_messages
+        return output_content.text
 
     def message_db_save(self, message, div, local, AREA, ID, index):
         date_time, area = AREA[index].split(' [')
@@ -165,14 +153,15 @@ class PEx(BehaviorModelExecutor):
         for j in local:
             bot.chatbot_db.insert_table(1, [message, keyword, j, area, ID[index], date_time]) #메시지, 종류, 지역, 기관, 번호 순으로 저장
 
-    def message_send(self, ID, index):
-        bot.sendMessageFromSim()        #챗봇에 메시지 출력
+    def message_send(self, local, ID, index):
+        for loc in local:
+            bot.sendMessageFromSim(loc)        #챗봇에 메시지 출력
         bot.chatbot_db.post_num = ID[index]       #시뮬레이션의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
 
     def randmessage(self):
         print('send message')
-        bot.chatbot_db.insert_table(1, ['%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(bot.chatbot_db.post_num)+1), '병', '충청북도', '충청북도', str(int(bot.chatbot_db.post_num)+1)])
-        bot.sendMessageFromSim()
+        bot.chatbot_db.insert_table(1, ['%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(bot.chatbot_db.post_num)+1), '병', '충청북도', '충청북도', str(int(bot.chatbot_db.post_num)+1), '2023-01-18'])
+        bot.sendMessageFromSim('충청북도')
         bot.chatbot_db.post_num = bot.chatbot_db.post_number()
         self.count += 1
         if(self.count >= 150):

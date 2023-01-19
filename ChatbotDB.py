@@ -83,27 +83,20 @@ class ChatbotDB:
         self.con.close()
         print("[DB] - disconnet")
 
-    def search_data(self, mode):
-        serarch_data = []
+    def search_data(self, region):
+        message = ''
         cursor_db = self.con.cursor()
         str_data = []
-        cursor_db.execute("SELECT *FROM kr_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (self.user_region,))
+        cursor_db.execute("SELECT *FROM kr_tb WHERE region=? ORDER BY ROWID DESC LIMIT 1", (region,))
         str_data = cursor_db.fetchall()
 
         if(len(str_data) != 0):
-            if(mode == 0):
-                message = PEx.TransMessage([str_data[0][0]], 'ko', self.user_language_code)
-                serarch_data.append(message[0])
-            elif(mode == 1):
-                for i in range(0, len(str_data)):
-                    if(str_data[i][4] > self.post_num):
-                        message = PEx.TransMessage([str_data[i][0]], 'ko', self.user_language_code)
-                        serarch_data.append(message[0])
+            message = str_data[0][0]
         else:
-            serarch_data.append("Sorry, the latest disaster safety text does not exist.")
+            message = "Sorry, the latest disaster safety text does not exist."
 
         print("[DB] - send complete")
-        return serarch_data
+        return message
 
     def visited_user(self):
         cursor_db = self.con.cursor()
@@ -141,11 +134,11 @@ class ChatbotDB:
     def get_user_list(self, region):
         cursor_db = self.con.cursor()
         cursor_db.execute("select *from user_tb where region=?", (region,))
+        cursor_db.execute('SELECT * FROM user_tb ORDER BY language ASC')
         user_data = cursor_db.fetchall()
         self.con.commit()
         
         return user_data
-        
 
     def get_user_language(self):
         user_language = ''
