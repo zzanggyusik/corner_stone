@@ -1,20 +1,38 @@
-import telegram
 from telegram import *
 from telegram.ext import *
 from ChatbotDB import *
 
 class ChatbotConstants:
+    # Conversation State
     REGION_BUTTON = 'Region Button'
     LANGUAGE_BUTTON = 'Language Button'
-    YES_NO_BUTTON = 'Yes or No'
     END = 'End'
 
+    # Text List Index
+    INTRO = 0
+    SEL_REGION = 1
+    SEL_LANG = 2
+    COMPLETE = 3
+    START = 4
+    SET_INFO = 5
+    HINT = 6
+####################################################l
 class TestChatbot:
     TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to'
 ##############################################################
     def __init__(self) -> None:
         self.updater = Updater(TestChatbot.TOKEN)
-        self.chatbot_db = ChatbotDB()
+        self.chatbot_db = ChatbotDB() # connect와 create table 됨
+        self.user_default_lang = ''
+        self.text_list = [
+            "Hello, I'm a disaster text translation bot.",
+            "Please select the area you live in.",
+            "Please select a language to translate.",
+            "The setting is complete.",
+            "Disaster Text Output",
+            "Language and Region Reset",
+            "How to use"
+        ]
 
         self.mainHandler_conv = ConversationHandler(
             entry_points = [
@@ -41,33 +59,62 @@ class TestChatbot:
 ##############################################################
     def sendIntro(self, message: Message) -> None:
         message.reply_text(
-            text = '안녕하세요. 긴급 재난 문자 번역 봇입니다.'
-        )
+            text = self.text_list[ChatbotConstants.INTRO]
+        )        
 
     def createButtons(self, mode) -> InlineKeyboardMarkup:
         buttons = []
 
         if(mode == ChatbotConstants.REGION_BUTTON):
             buttons = [
-                [
-                    InlineKeyboardButton('대전광역시', callback_data = 'DJ'),
-                    InlineKeyboardButton('충청북도', callback_data = 'CB'),
-                ]
+                [InlineKeyboardButton("Seoul Metropolitan City", callback_data = '서울특별시')],
+                [InlineKeyboardButton("Busan Metropolitan City", callback_data = '부산광역시')],
+                [InlineKeyboardButton("Daegu Metropolitan City", callback_data = '대구광역시')],
+                [InlineKeyboardButton("Incheon Metropolitan City", callback_data = '인천광역시')],
+                [InlineKeyboardButton("Gwangju Metropolitan City", callback_data = '광주광역시')],
+                [InlineKeyboardButton("Daejeon Metropolitan City", callback_data = '대전광역시')],
+                [InlineKeyboardButton("Ulsan Metropolitan City", callback_data = '울산광역시')],
+                [InlineKeyboardButton("Sejong City", callback_data = '세종특별자치시')],
+                [InlineKeyboardButton("Gyeonggi Province", callback_data = '경기도')],
+                [InlineKeyboardButton("Gangwon-do", callback_data = '강원도')],
+                [InlineKeyboardButton("Chungcheongbuk-do", callback_data = '충청북도')],
+                [InlineKeyboardButton("Chungcheongnam-do", callback_data = '충청남도')],
+                [InlineKeyboardButton("Jeollabuk-do", callback_data = '전라북도')],
+                [InlineKeyboardButton("Jeollanam-do", callback_data = '전라남도')],
+                [InlineKeyboardButton("Gyeongsangbuk-do Province", callback_data = '경상북도')],
+                [InlineKeyboardButton("Gyeongsangnam-do Province", callback_data = '경상남도')],
+                [InlineKeyboardButton("Jeju Special Self-Governing Province", callback_data = '제주특별자치도')],
             ]
         elif(mode == ChatbotConstants.LANGUAGE_BUTTON):
             buttons = [
-                [InlineKeyboardButton('english', callback_data = 'en')],
-                [InlineKeyboardButton('日本語', callback_data = 'ja')],
-                [InlineKeyboardButton('中文 (简体)', callback_data = 'zh-CN')],
-                [InlineKeyboardButton('中文 (繁體)', callback_data = 'zh-TW')],
-                [InlineKeyboardButton('back', callback_data = 'back')]
-            ]
-        elif(mode == ChatbotConstants.YES_NO_BUTTON):
-            buttons = [
                 [
-                    InlineKeyboardButton('예', callback_data = 'yes'),
-                    InlineKeyboardButton('아니요', callback_data = 'no')
-                ]
+                    InlineKeyboardButton("English", callback_data = 'en'),
+                    InlineKeyboardButton("にほんご", callback_data = 'ja')
+                ],
+                [
+                    InlineKeyboardButton("中文", callback_data = 'zh-CN'),
+                    InlineKeyboardButton("漢語", callback_data = 'zh-TW')
+                ],
+                [
+                    InlineKeyboardButton("español", callback_data = 'es'),
+                    InlineKeyboardButton("français", callback_data = 'fr')
+                ],
+                [
+                    InlineKeyboardButton("das Deutsche", callback_data = 'de'),
+                    InlineKeyboardButton("Русский", callback_data = 'ru')
+                ],
+                [
+                    InlineKeyboardButton("Português", callback_data = 'pt'),
+                    InlineKeyboardButton("italiàno", callback_data = 'it')
+                ],
+                [
+                    InlineKeyboardButton("Tiếng Việt", callback_data = 'vi'),
+                    InlineKeyboardButton("ภาษาไทย", callback_data = 'th')
+                ],
+                [
+                    InlineKeyboardButton("Bahasa Indonesia", callback_data = 'id'),
+                    InlineKeyboardButton("बहसा इंडोनेशिया", callback_data = 'hi')
+                ],
             ]
         else:
             pass
@@ -75,22 +122,24 @@ class TestChatbot:
         return InlineKeyboardMarkup(buttons)
 
     def sendMessageFromSim(self):
-        # DB에서 재난 문자 긁어 오기 DB쪽 함수 호출 해야함
-        # text: list = PEx.transMessage(DB에서 긁어온 메시지 리스트 형태)
-        # upda
-        # for t in text:
-        #     self.updater.bot.send_message(
-        #         #chat_id = DB.user_id,
-        #         #text = t
-        #     )
-        pass
+        if self.chatbot_db.visited_user():
+            messages = self.chatbot_db.search_data(1)
+            userList = self.chatbot_db.get_user_list()
+            for u in userList:
+                for m in messages:
+                    self.updater.bot.send_message(
+                        chat_id = self.chatbot_db.user_id,
+                        text = m
+                    )
 
 ##############################################################
     def cb_start(self, update: Update, context: CallbackContext):
         self.chatbot_db.user_id = update.effective_user.id
+        self.user_default_lang = update.effective_user.language_code
 
+        # TODO : PEx.TransMessage(messageList, en, user_default_lang)를 통해 
+        #        번역된 메뉴 메시지들을 출력
 
-        # 아래 두 함수는 정보가 있든 없든 출력
         self.sendIntro(message = update.message)
         self.cb_sendHint(update, context)
 
@@ -102,18 +151,8 @@ class TestChatbot:
         self.chatbot_db.user_id = update.effective_user.id
         print(self.chatbot_db.user_id)
 
-        if self.chatbot_db.visited_user():
-            update.message.reply_text(
-                text = '번역 받으실 언어를 변경하시겠습니까?',
-                reply_markup = self.createButtons(ChatbotConstants.YES_NO_BUTTON)
-            )
-            return ChatbotConstants.END
-
-        text = '거주하시는 지역을 선택하세요.'
+        text = self.text_list[ChatbotConstants.SEL_REGION]
         reply_markup = self.createButtons(ChatbotConstants.REGION_BUTTON)
-        # DB에 정보가 있는지 확인
-
-        # 있을 경우 return IS_INFO를 반환하여 Conversation Handler에서 다른 callback 호출
 
         # 없을 경우 메뉴 출력
         if update.callback_query == None:  
@@ -130,41 +169,48 @@ class TestChatbot:
         return ChatbotConstants.REGION_BUTTON
 
     def cb_setLanguage(self, update: Update, context: CallbackContext):
-        # DB에 Region 값 저장(갱신) "update.callback_query.data"
+        self.chatbot_db.user_id = update.effective_user.id
+
+        update.callback_query.answer()
+        self.chatbot_db.user_region = update.callback_query.data
+        print('[Bot] : save user region data')
+
+        text = self.text_list[ChatbotConstants.SEL_LANG]
+
         update.callback_query.edit_message_text(
-            text = '번역 받으실 언어를 선택해 주세요.',
+            text = text,
             reply_markup = self.createButtons(ChatbotConstants.LANGUAGE_BUTTON)
         )
 
         return ChatbotConstants.LANGUAGE_BUTTON
 
     def cb_completeSetting(self, update: Update, context: CallbackContext):
-        # DB에 Language 값 저장(갱신) "update.callback_query.data"
-        print(update.callback_query.data)
+        self.chatbot_db.user_id = update.effective_user.id
+
+        update.callback_query.answer()
+        self.chatbot_db.user_language_code = update.callback_query.data
+        print('[Bot] : save user language code data')
+
+        self.chatbot_db.insert_table()
+
+        text = self.text_list[ChatbotConstants.COMPLETE]
         
         update.callback_query.edit_message_text(
-            text = '세팅이 완료됐습니다.'
+            text = text
         )
 
-        update.callback_query.message.reply_text(
-            text = '메시지 보내는 중...'
-        )
-
-        update.callback_query.message.reply_text(
-            text = '긴급 재난 문자입니다.'
-        )
         return ChatbotConstants.END
 
     def cb_cancel(self, update: Update, context: CallbackContext):
-        pass
-    
+        return ChatbotConstants.END
 ##############################################################
     def cb_sendHint(self, update: Update, context: CallbackContext) -> None:
+        text = self.text_list[ChatbotConstants.HINT]
         update.message.reply_text(
-            text = '/start - 챗봇 시작(메시지 전송)\n' 
-                + '/help - 사용법 설명\n'
-                + '/set - 지역, 언어 설정'
+            text = text
         )
+        update.message.reply_text('< Menu >\n'+"'/start' | "+self.text_list[ChatbotConstants.START]+"\n '/set'  | "+self.text_list[ChatbotConstants.SET_INFO]+"\n'/help' | "+self.text_list[ChatbotConstants.HINT]+"\n")
+
 ##############################################################
 def main() -> None:
     bot = TestChatbot()
