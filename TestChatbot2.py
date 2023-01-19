@@ -1,6 +1,7 @@
 from telegram import *
 from telegram.ext import *
 from ChatbotDB import *
+import config
 
 class ChatbotConstants:
     # Conversation State
@@ -18,7 +19,7 @@ class ChatbotConstants:
     # HINT = 6
 ####################################################l
 class TestChatbot:
-    TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to'
+    TOKEN = config.TOKEN
 ##############################################################
     def __init__(self) -> None:
         self.updater = Updater(TestChatbot.TOKEN)
