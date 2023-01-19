@@ -1,6 +1,6 @@
 from sqlite3 import Error
 import sqlite3
-from pytrans import PEx
+from pyev import PEx
 
 class ChatbotDB:
     def __init__(self) -> None:
