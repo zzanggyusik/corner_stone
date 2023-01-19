@@ -14,8 +14,8 @@ class ChatbotDB:
         self.user_types = ['INT', 'TEXT', 'TEXT']
         
         self.message_table = ['kr_tb']
-        self.message_cols = ['info', 'keyword', 'region', 'area', 'number']
-        self.message_types = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
+        self.message_cols = ['info', 'keyword', 'region', 'area', 'number', 'date']
+        self.message_types = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
 
         self.langs = [None, '영어', '중국어', '일본어']
         self.langs_code = ['', 'en', 'zh-CN', 'ja']
@@ -97,7 +97,7 @@ class ChatbotDB:
             elif(mode == 1):
                 for i in range(0, len(str_data)):
                     if(str_data[i][4] > self.post_num):
-                        message = PEx.TransMessage(str_data[i][0], 'ko', self.user_language_code)
+                        message = PEx.TransMessage([str_data[i][0]], 'ko', self.user_language_code)
                         serarch_data.append(message[0])
         else:
             serarch_data.append("Sorry, the latest disaster safety text does not exist.")
@@ -137,6 +137,15 @@ class ChatbotDB:
         else:
             print("[DB] - check_data -> False")
             return True
+
+    def get_user_list(self, region):
+        cursor_db = self.con.cursor()
+        cursor_db.execute("select *from user_tb where region=?", (region,))
+        user_data = cursor_db.fetchall()
+        self.con.commit()
+        
+        return user_data
+        
 
     def get_user_language(self):
         user_language = ''
