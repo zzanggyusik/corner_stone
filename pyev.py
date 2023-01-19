@@ -7,6 +7,7 @@ import pyperclip
 from telegram import *
 from telegram.ext import *
 from TestChatbot import *
+from googletrans import Translator #pip install googletrans==4.0.0-rc1
 import random
 import time
 
@@ -147,6 +148,14 @@ class PEx(BehaviorModelExecutor):
                 except:
                     continue
         
+        return output_messages
+
+    def Ggtrans(messages, src='ko', dest='en'):
+        trans = Translator()
+        output_messages = []
+        for message in messages:
+            output_messages.append(trans.translate(message, src=src, dest=dest).text)
+
         return output_messages
 
     def message_db_save(self, message, div, local, AREA, ID, index):
