@@ -135,7 +135,8 @@ class TestChatbot:
             for u in userlist:
                 if u[LANG] not in trans_dict:
                     # TODO : 이미 번역된 메시지가 없을 경우, 메시지를 먼저 번역해서 임시 딕셔너리에 저장
-                    trans_dict.update(u[LANG], PEx.TransMessage(message, 'ko', u[LANG]))
+                    print('번역 함')
+                    trans_dict[u[LANG]] = PEx.TransMessage(message, 'ko', u[LANG])
 
                 self.updater.bot.send_message(
                     chat_id = u[ID],
@@ -218,6 +219,7 @@ class TestChatbot:
 
         # TODO : 이제 막 세팅이 끝난 유저, DB에 저장된 가장 최근의 메시지를 보내기
         message = self.chatbot_db.search_data(self.chatbot_db.user_region)
+        message = PEx.TransMessage(message, 'ko', self.chatbot_db.user_language_code)
         update.callback_query.message.reply_text(
             text = message
         )
