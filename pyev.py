@@ -18,7 +18,6 @@ class PEx(BehaviorModelExecutor):
         self.insert_state("Wait", Infinite)
         self.insert_state("Generate", 1)
         self.driver1 = webdriver.Chrome("chromedriver")  #크롬 드라이버 객체 생성
-        self.driver2 = webdriver.Chrome("chromedriver")  #크롬 드라이버 객체 생성
         self.count = bot.chatbot_db.remove_old_data() #데이터 베이스의 데이터 갯수 저장
         self.languages = ['ko', 'en', 'zh-CN', 'ja', 'vi']
         
@@ -53,7 +52,7 @@ class PEx(BehaviorModelExecutor):
                 print()
         elif(random.randint(0, 100) % 15 == 0):
             self.randmessage()  #랜덤 db 데이터 삽입 및 텔레그램 메시지 출력
-
+ 
     def message_Information(self):
         while(1):
             try:
@@ -114,7 +113,6 @@ class PEx(BehaviorModelExecutor):
         pyperclip.copy(user_input)  #번역할 내용 클립보드에 저장
         webdriver.ActionChains(driver).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()   #ctrl+v 명령어 수행
         pyperclip.copy(temp_copy)   #클립보드 비우기
-        return
     
     def TransMessage(message, src='ko', dest='en'):
         driver = webdriver.Chrome("chromedriver")
