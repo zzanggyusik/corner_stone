@@ -8,7 +8,6 @@ from telegram import *
 from telegram.ext import *
 from TestChatbot import *
 import random
-import time
 
 
 class PEx(BehaviorModelExecutor):
@@ -44,7 +43,7 @@ class PEx(BehaviorModelExecutor):
                 print(message)
                 if(message != ''):
                     self.message_db_save(message, div, local, AREA, ID, index)  #메시지와 정보 데이터 베이스에 저장
-                    self.message_send(ID, local, index)                         #메시지 보내기
+                    self.message_send(local, ID, index)                         #메시지 보내기
                     self.count += len(local)                                    #데이터 베이스의 데이터의 갯수 추가
                     index -= 1
                     if(self.count >= 150):

@@ -1,6 +1,5 @@
 from sqlite3 import Error
 import sqlite3
-from pyev import PEx
 
 class ChatbotDB:
     def __init__(self) -> None:
@@ -91,7 +90,7 @@ class ChatbotDB:
         str_data = cursor_db.fetchall()
 
         if(len(str_data) != 0):
-            message = str_data[0][0]
+            message = str_data[0][5] + '\n' + str_data[0][0]
         else:
             message = "Sorry, the latest disaster safety text does not exist."
 
