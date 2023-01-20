@@ -20,18 +20,21 @@ class ChatbotConstants:
 ####################################################l
 class TestChatbot:
     TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to'
+    # TOKEN = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
 ##############################################################
     def __init__(self) -> None:
         self.updater = Updater(TestChatbot.TOKEN)
         self.chatbot_db = ChatbotDB() # connect와 create table 됨
-        self.user_default_lang = ''
+
+        self.user_dict = {}
+
         self.text_list = [
             "Hello, I'm a disaster text translation bot.",
             "Please select the area you live in.",
             "Please select a language to translate.",
             "The setting is complete.",
-            "Disaster Text Output",
-            "Language and Region Reset",
+            "Send disaster text message (when setup is complete)",
+            "Region and language setting",
             "How to use"
         ]
 
@@ -116,6 +119,9 @@ class TestChatbot:
                     InlineKeyboardButton("Bahasa Indonesia", callback_data = 'id'),
                     InlineKeyboardButton("बहसा इंडोनेशिया", callback_data = 'hi')
                 ],
+                [  
+                    InlineKeyboardButton('back', callback_data = 'back')
+                ]
             ]
         else:
             pass
@@ -134,8 +140,6 @@ class TestChatbot:
             trans_dict = {}
             for u in userlist:
                 if u[LANG] not in trans_dict:
-                    # TODO : 이미 번역된 메시지가 없을 경우, 메시지를 먼저 번역해서 임시 딕셔너리에 저장
-                    print('번역 함')
                     trans_dict[u[LANG]] = PEx.TransMessage(message, 'ko', u[LANG])
 
                 self.updater.bot.send_message(
@@ -143,17 +147,9 @@ class TestChatbot:
                     text = trans_dict[u[LANG]]
                 )
 
-                    
-
-
-
 ##############################################################
     def cb_start(self, update: Update, context: CallbackContext):
         self.chatbot_db.user_id = update.effective_user.id
-        self.user_default_lang = update.effective_user.language_code
-
-        # TODO : PEx.TransMessage(messageList, en, user_default_lang)를 통해 
-        #        번역된 메뉴 메시지들을 출력
 
         self.sendIntro(message = update.message)
         self.cb_sendHint(update, context)
@@ -163,8 +159,9 @@ class TestChatbot:
     # 1. DB와 연결된 상태에서, 정보가 있다면, 재설정 하겠냐고 물어보기
     # 2. DB에 정보가 없다면 정보 입력 
     def cb_setRegion(self, update: Update, context: CallbackContext):
-        self.chatbot_db.user_id = update.effective_user.id
-        print(self.chatbot_db.user_id)
+        if update.effective_user.id not in self.user_dict:
+            self.user_dict[update.effective_user.id] = []
+            print(self.user_dict)
 
         text = self.text_list[ChatbotConstants.SEL_REGION]
         reply_markup = self.createButtons(ChatbotConstants.REGION_BUTTON)
@@ -184,14 +181,11 @@ class TestChatbot:
         return ChatbotConstants.REGION_BUTTON
 
     def cb_setLanguage(self, update: Update, context: CallbackContext):
-        self.chatbot_db.user_id = update.effective_user.id
-
         update.callback_query.answer()
-        self.chatbot_db.user_region = update.callback_query.data
-        print('[Bot] : save user region data')
+        self.user_dict[update.effective_user.id] = [update.callback_query.data]
+        print(self.user_dict)
 
         text = self.text_list[ChatbotConstants.SEL_LANG]
-
         update.callback_query.edit_message_text(
             text = text,
             reply_markup = self.createButtons(ChatbotConstants.LANGUAGE_BUTTON)
@@ -199,20 +193,24 @@ class TestChatbot:
 
         return ChatbotConstants.LANGUAGE_BUTTON
 
-    def tmp(self):
-        pass
-
     def cb_completeSetting(self, update: Update, context: CallbackContext):
-        self.chatbot_db.user_id = update.effective_user.id
+        REGION = 0
+        LANG = 1
 
         update.callback_query.answer()
-        self.chatbot_db.user_language_code = update.callback_query.data
-        print('[Bot] : save user language code data')
-
+        self.user_dict[update.effective_user.id].append(update.callback_query.data)
+        print(self.user_dict)
+ 
+        self.chatbot_db.user_id = update.effective_user.id
+        self.chatbot_db.user_region = self.user_dict[update.effective_user.id][REGION]
+        self.chatbot_db.user_language_code = self.user_dict[update.effective_user.id][LANG]
         self.chatbot_db.insert_table()
 
+        del self.user_dict[update.effective_user.id]
+        print('[bot] : delete user dict')
+        print(self.user_dict)
+
         text = self.text_list[ChatbotConstants.COMPLETE]
-        
         update.callback_query.edit_message_text(
             text = text
         )
@@ -228,21 +226,28 @@ class TestChatbot:
 
     def cb_cancel(self, update: Update, context: CallbackContext):
         return ChatbotConstants.END
+        
 ##############################################################
     def cb_sendHint(self, update: Update, context: CallbackContext) -> None:
         text = self.text_list[ChatbotConstants.HINT]
         update.message.reply_text(
             text = text
         )
-        update.message.reply_text('< Menu >\n'+"'/start' | "+self.text_list[ChatbotConstants.START]+"\n '/set'  | "+self.text_list[ChatbotConstants.SET_INFO]+"\n'/help' | "+self.text_list[ChatbotConstants.HINT]+"\n")
+
+        update.message.reply_text(
+            '< Menu >'
+            + "\n/start : " + self.text_list[ChatbotConstants.START]
+            + "\n/set : " + self.text_list[ChatbotConstants.SET_INFO]
+            + "\n/help : " + self.text_list[ChatbotConstants.HINT]
+        )
 
 ##############################################################
-# def main() -> None:
-#     bot = TestChatbot()
-#     bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
-#     bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
-#     bot.updater.start_polling()
-#     bot.updater.idle()
+def main() -> None:
+    bot = TestChatbot()
+    bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
+    bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
+    bot.updater.start_polling()
+    bot.updater.idle()
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
