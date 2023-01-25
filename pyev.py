@@ -8,6 +8,7 @@ from telegram import *
 from telegram.ext import *
 from TestChatbot import *
 import random
+import time
 
 
 class PEx(BehaviorModelExecutor):
@@ -147,6 +148,11 @@ class PEx(BehaviorModelExecutor):
                 driver.implicitly_wait(20)    #번역 대기 시간
                 while output_content.text == "":    #아직 번역이 되지 않았을 때
                     driver.implicitly_wait(20)
+                post_message = output_content.text
+                time.sleep(0.05)
+                while post_message != output_content.text:
+                    time.sleep(0.05)
+                    post_message = output_content.text
                 print(output_content.text)
                 break
             except:
