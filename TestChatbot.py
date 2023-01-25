@@ -242,12 +242,12 @@ class TestChatbot:
         )
 
 ##############################################################
-def main() -> None:
-    bot = TestChatbot()
-    bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
-    bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
-    bot.updater.start_polling()
-    bot.updater.idle()
+# def main() -> None:
+#     bot = TestChatbot()
+#     bot.updater.dispatcher.add_handler(bot.mainHandler_conv)
+#     bot.updater.dispatcher.add_handler(CommandHandler('help', bot.cb_sendHint))
+#     bot.updater.start_polling()
+#     bot.updater.idle()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
