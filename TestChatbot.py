@@ -142,15 +142,12 @@ class TestChatbot:
                 if u[LANG] not in trans_dict: # 이미 번역한 메시지가 없다면
                     lang_code = 'ko'
                     if(u[LANG] == 'pt' or u[LANG] == 'hi'):
-                        if 'en' in trans_dict:
-                            t = trans_dict['en']
-                        else:
-                            trans_dict['en'] = PEx.TransMessage(t, lang_code, 'en')
-                        
-                        lang_code = 'en'
-
+                        if 'en' not in trans_dict:
+                            trans_dict['en'] = PEx.TransMessage(message, lang_code, 'en')
+                        trans_dict[u[LANG]] = PEx.TransMessage(trans_dict['en'], 'en', u[LANG])
                     # 임시 딕셔너리에 번역한 메시지 저장
-                    trans_dict[u[LANG]] = PEx.TransMessage(message, lang_code, u[LANG])
+                    else:
+                        trans_dict[u[LANG]] = PEx.TransMessage(message, lang_code, u[LANG])
 
                 self.updater.bot.send_message(
                     chat_id = u[ID],

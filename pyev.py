@@ -54,10 +54,11 @@ class PEx(BehaviorModelExecutor):
             self.randmessage()  #랜덤 db 데이터 삽입 및 텔레그램 메시지 출력
  
     def message_Information(self):
+        site_url = "https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679"
         while(1):
             try:
                 self.driver1.implicitly_wait(20)
-                self.driver1.get("https://www.safekorea.go.kr/idsiSFK/neo/sfk/cs/sfc/dis/disasterMsgList.jsp?menuSeq=679")
+                self.driver1.get(site_url)
                 self.driver1.implicitly_wait(20)
                 self.boxs = self.driver1.find_element(By.CLASS_NAME, 'boardList_boxWrap')
                 break
@@ -71,9 +72,12 @@ class PEx(BehaviorModelExecutor):
 
         for i in range(10):
             self.driver1.implicitly_wait(20)
-            new_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_MD101_SN'%str(i))                                  #재난 문자의 번호 저장
-            div_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_DSSTR_SE_NM'%str(i))                               #재난 문자의 종류 저장
-            area_id = self.box.find_elements(By.CSS_SELECTOR, '#disasterSms_tr_%c_apiData1 > td:nth-child(4)'%str(i))    #재난 문자의 기관 저장
+            #재난 문자의 번호 저장
+            new_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_MD101_SN'%str(i))
+            #재난 문자의 종류 저장
+            div_id = self.box.find_elements(By.ID, 'disasterSms_tr_%c_DSSTR_SE_NM'%str(i))
+            #재난 문자의 기관 저장
+            area_id = self.box.find_elements(By.CSS_SELECTOR, '#disasterSms_tr_%c_apiData1 > td:nth-child(4)'%str(i))
 
             if(len(new_id) == 1):
                 ID.append(new_id[0].text)
@@ -88,9 +92,11 @@ class PEx(BehaviorModelExecutor):
     def message_collect(self, index):
         while(1):
             try:
-                title = self.titles[index].find_element(By.TAG_NAME, 'a').click()    #링크 클릭하여 접속
+                #링크 클릭하여 접속
+                title = self.titles[index].find_element(By.TAG_NAME, 'a').click()
                 self.driver1.implicitly_wait(20)
-                location = self.driver1.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text #재난 문자 발송 지역 저장
+                #재난 문자 발송 지역 저장
+                location = self.driver1.find_element(By.CSS_SELECTOR, '#bbsDetail_0_cdate').text
                 location = location.split(',')
                 local = []
                 if(len(location) > 1):  #여러 지역에 발송되었을 때
@@ -100,7 +106,8 @@ class PEx(BehaviorModelExecutor):
                 else:   #한 지역에만 발송되었을 때
                     local.append(location[0].split()[0])
 
-                message = self.driver1.find_element(By.CSS_SELECTOR, '#msg_cn').text #재난 문자 메시지 저장
+                #재난 문자 메시지 저장
+                message = self.driver1.find_element(By.CSS_SELECTOR, '#msg_cn').text
                 self.driver1.back()
                 break
             except:
@@ -111,7 +118,8 @@ class PEx(BehaviorModelExecutor):
     def clipboard_input(driver, user_input="", default_delay=1):
         temp_copy = pyperclip.paste()
         pyperclip.copy(user_input)  #번역할 내용 클립보드에 저장
-        webdriver.ActionChains(driver).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()   #ctrl+v 명령어 수행
+        #ctrl+v 명령어 수행
+        webdriver.ActionChains(driver).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
         pyperclip.copy(temp_copy)   #클립보드 비우기
     
     def TransMessage(message, src='ko', dest='en'):
@@ -124,9 +132,12 @@ class PEx(BehaviorModelExecutor):
                 driver.get(url)
                 driver.implicitly_wait(20)
 
-                input_content = driver.find_element(By.XPATH, '//*[@id="txtSource"]')     #번역할 내용을 넣는 공간
-                process_Btn = driver.find_element(By.XPATH, '//*[@id="btnTranslate"]')    #번역하기 버튼
-                output_content = driver.find_element(By.XPATH, '//*[@id="txtTarget"]')    #번역된 내용이 있는 공간
+                #번역할 내용을 넣는 공간
+                input_content = driver.find_element(By.XPATH, '//*[@id="txtSource"]')
+                #번역하기 버튼
+                process_Btn = driver.find_element(By.XPATH, '//*[@id="btnTranslate"]')
+                #번역된 내용이 있는 공간
+                output_content = driver.find_element(By.XPATH, '//*[@id="txtTarget"]')
 
                 input_content.clear()   #공간 비우기
                 driver.implicitly_wait(20)
@@ -148,12 +159,15 @@ class PEx(BehaviorModelExecutor):
         area = area[:len(area)-1]
         keyword = div[index]
         for j in local:
-            bot.chatbot_db.insert_table(1, [message, keyword, j, area, ID[index], date_time]) #메시지, 종류, 지역, 기관, 번호 순으로 저장
+            #메시지, 종류, 지역, 기관, 번호 순으로 저장
+            bot.chatbot_db.insert_table(1, [message, keyword, j, area, ID[index], date_time])
 
     def message_send(self, local, ID, index):
         for loc in local:
-            bot.sendMessageFromSim(loc)        #챗봇에 메시지 출력
-        bot.chatbot_db.post_num = ID[index]       #시뮬레이션의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
+            #챗봇에 메시지 출력
+            bot.sendMessageFromSim(loc)
+        #시뮬레이션의 post_num을 방금 db에 저장한 가장 최근 재난 문자의 번호로 초기화
+        bot.chatbot_db.post_num = ID[index]
 
     def randmessage(self):
         print('send message')
