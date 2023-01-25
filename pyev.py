@@ -170,9 +170,14 @@ class PEx(BehaviorModelExecutor):
         bot.chatbot_db.post_num = ID[index]
 
     def randmessage(self):
+        rand_loc = ['서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시',
+                    '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원도',
+                    '충청북도', '충청남도', '전라북도', '전라남도', '경상북도',
+                    '경상남도', '제주특별자치도']
         print('send message')
-        bot.chatbot_db.insert_table(1, ['%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(bot.chatbot_db.post_num)+1), '병', '충청북도', '충청북도', str(int(bot.chatbot_db.post_num)+1), '2023-01-18'])
-        bot.sendMessageFromSim('충청북도')
+        ran_loc = rand_loc[random.randint(0, 100) % 17]
+        bot.chatbot_db.insert_table(1, ['%s.안녕하세요. 테스트 용 메시지 입니다.(한국어)'%str(int(bot.chatbot_db.post_num)+1), '병', ran_loc, ran_loc, str(int(bot.chatbot_db.post_num)+1), '2023-01-18'])
+        bot.sendMessageFromSim(ran_loc)
         bot.chatbot_db.post_num = bot.chatbot_db.post_number()
         self.count += 1
         if(self.count >= 150):
