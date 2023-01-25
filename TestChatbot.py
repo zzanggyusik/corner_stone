@@ -19,9 +19,9 @@ class ChatbotConstants:
     HINT = 6
 ####################################################l
 class TestChatbot:
-    TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to' # myCornerstone
+    # TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to' # myCornerstone
     # TOKEN = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI' # Cornerstone2
-    # TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho" # cornserstone
+    TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho" # cornserstone
 ##############################################################
     def __init__(self) -> None:
         self.updater = Updater(TestChatbot.TOKEN)
@@ -34,7 +34,7 @@ class TestChatbot:
             "Please select the area you live in.",
             "Please select a language to translate.",
             "The setting is complete.",
-            "Send disaster text message (when setup is complete)",
+            "Send disaster text message \n(when setup is complete)",
             "Region and language setting",
             "How to use"
         ]
@@ -139,8 +139,18 @@ class TestChatbot:
 
             trans_dict = {}
             for u in userlist:
-                if u[LANG] not in trans_dict:
-                    trans_dict[u[LANG]] = PEx.TransMessage(message, 'ko', u[LANG])
+                if u[LANG] not in trans_dict: # 이미 번역한 메시지가 없다면
+                    lang_code = 'ko'
+                    if(u[LANG] == 'pt' or u[LANG] == 'hi'):
+                        if 'en' in trans_dict:
+                            t = trans_dict['en']
+                        else:
+                            trans_dict['en'] = PEx.TransMessage(t, lang_code, 'en')
+                        
+                        lang_code = 'en'
+
+                    # 임시 딕셔너리에 번역한 메시지 저장
+                    trans_dict[u[LANG]] = PEx.TransMessage(message, lang_code, u[LANG])
 
                 self.updater.bot.send_message(
                     chat_id = u[ID],
@@ -182,7 +192,7 @@ class TestChatbot:
 
         text = self.text_list[ChatbotConstants.SEL_REGION]
         reply_markup = self.createButtons(ChatbotConstants.REGION_BUTTON)
-        
+
         if update.callback_query == None:  
             update.message.reply_text(
                 text = text,
