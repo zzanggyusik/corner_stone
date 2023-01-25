@@ -19,8 +19,9 @@ class ChatbotConstants:
     HINT = 6
 ####################################################l
 class TestChatbot:
-    #TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to'
-    TOKEN = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI'
+    TOKEN = '5816928241:AAEOJisRYhwP64tckKU7J5BLc7QXwKLi_to' # myCornerstone
+    # TOKEN = '5936320630:AAGPcpJQfVwN6V5aYMstT1jBkvwn2hhsubI' # Cornerstone2
+    # TOKEN = "5620332585:AAE6riueZPkYVu3y_v3z5rg3ozaK68ys-Ho" # cornserstone
 ##############################################################
     def __init__(self) -> None:
         self.updater = Updater(TestChatbot.TOKEN)
@@ -128,14 +129,13 @@ class TestChatbot:
 
         return InlineKeyboardMarkup(buttons)
 
-    # 이미 세팅이 끝난 유저가 사이트에서 새로 갱신된 문자를 보내게끔
     def sendMessageFromSim(self, region):
         if self.chatbot_db.visited_user():
             ID = 0
             LANG = 1
     
-            userlist = self.chatbot_db.get_user_list(region) # 충청북도 유저 리스트
-            message = self.chatbot_db.search_data(region) # 충청북도 재난 문자(번역 x)
+            userlist = self.chatbot_db.get_user_list(region)
+            message = self.chatbot_db.search_data(region)
 
             trans_dict = {}
             for u in userlist:
@@ -147,6 +147,20 @@ class TestChatbot:
                     text = trans_dict[u[LANG]]
                 )
 
+    def sendMessage(self, message: Message) -> None:
+        m = self.chatbot_db.search_data(self.chatbot_db.user_region)
+        lang_code = 'ko'
+
+        if(self.chatbot_db.user_language_code == 'pt'
+            or self.chatbot_db.user_language_code == 'hi'):
+            lang_code = 'en'
+            m = PEx.TransMessage(m, 'ko', 'en')
+
+        m = PEx.TransMessage(m, lang_code, self.chatbot_db.user_language_code)
+        message.reply_text(
+            text = m
+        )
+
 ##############################################################
     def cb_start(self, update: Update, context: CallbackContext):
         self.chatbot_db.user_id = update.effective_user.id
@@ -154,10 +168,13 @@ class TestChatbot:
         self.sendIntro(message = update.message)
         self.cb_sendHint(update, context)
 
+        if self.chatbot_db.visited_user():
+            self.chatbot_db.get_user_language()
+            self.chatbot_db.get_user_location()
+            self.sendMessage(update.message)
+
         return ChatbotConstants.END
 
-    # 1. DB와 연결된 상태에서, 정보가 있다면, 재설정 하겠냐고 물어보기
-    # 2. DB에 정보가 없다면 정보 입력 
     def cb_setRegion(self, update: Update, context: CallbackContext):
         if update.effective_user.id not in self.user_dict:
             self.user_dict[update.effective_user.id] = []
@@ -165,8 +182,7 @@ class TestChatbot:
 
         text = self.text_list[ChatbotConstants.SEL_REGION]
         reply_markup = self.createButtons(ChatbotConstants.REGION_BUTTON)
-
-        # 없을 경우 메뉴 출력
+        
         if update.callback_query == None:  
             update.message.reply_text(
                 text = text,
@@ -216,11 +232,7 @@ class TestChatbot:
         )
 
         # TODO : 이제 막 세팅이 끝난 유저, DB에 저장된 가장 최근의 메시지를 보내기
-        message = self.chatbot_db.search_data(self.chatbot_db.user_region)
-        message = PEx.TransMessage(message, 'ko', self.chatbot_db.user_language_code)
-        update.callback_query.message.reply_text(
-            text = message
-        )
+        self.sendMessage(update.callback_query.message)
 
         return ChatbotConstants.END
 
